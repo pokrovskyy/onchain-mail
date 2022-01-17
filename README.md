@@ -15,15 +15,14 @@ npx hardhat help
 ```
 
 ## Stack
-- Client Framework - React
-React is a front end JavaScript library for building web applications, user interfaces, and UI components. It's maintained by Facebook and many many individual developers and companies.
+- React client Framework<br />
+Front end JavaScript library for building web applications, user interfaces, and UI components. It's maintained by Facebook and many many individual developers and companies.
 
-- Ethereum development environment - Hardhat
-Hardhat is an Ethereum development environment and framework designed for full stack development.
+- Hardhat<br />
+Ethereum development environment and framework designed for full stack development.
 
-- Ethereum Web Client Library - Ethers.js
+- Ethers.js<br />
 Aims to be a complete and compact library for interacting with the Ethereum Blockchain and its ecosystem from client-side JavaScript applications like React, Vue, Angular, or Svelte.
 
-- File Storage - IPFS
+- File Storage - IPFS<br />
 It will be used to store emails's metadata, messages and attachments.
-
