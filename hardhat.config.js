@@ -28,6 +28,10 @@ module.exports = {
     ropsten: {
       url: "https://ropsten.infura.io/v3/3c5e1aa90bb5438e924c7709d8d1cef2",
       accounts: [`0x${process.env.ACCOUNT_KEY}`]
+    },
+    rinkeby: {
+      url: "https://rinkeby.infura.io/v3/3c5e1aa90bb5438e924c7709d8d1cef2",
+      accounts: [`0x${process.env.ACCOUNT_KEY}`]
     }
   }
 };
