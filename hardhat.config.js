@@ -25,13 +25,13 @@ module.exports = {
     hardhat: {
       chainId: 1337
     },
+    rinkeby: {
+      url: "https://rinkeby.infura.io/v3/3c5e1aa90bb5438e924c7709d8d1cef2", // Get endpoints from https://www.alchemy.com or https://infura.io/
+      accounts: [`0x${process.env.ACCOUNT_KEY}`] // Get the private key from MetaMask and save it as an environment variable at ~/.zshrc 
+    },
     ropsten: {
       url: "https://ropsten.infura.io/v3/3c5e1aa90bb5438e924c7709d8d1cef2",
       accounts: [`0x${process.env.ACCOUNT_KEY}`]
-    },
-    rinkeby: {
-      url: "https://rinkeby.infura.io/v3/3c5e1aa90bb5438e924c7709d8d1cef2",
-      accounts: [`0x${process.env.ACCOUNT_KEY}`]
-    }
+    }    
   }
 };
