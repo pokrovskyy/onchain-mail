@@ -56,6 +56,7 @@ describe("OnChainMail", function () {
       ethers.utils.parseEther("9889"),
       ethers.utils.parseEther("9890")
     );
+    expect(await provider.getBalance(mailer.address)).to.eq(ethers.utils.parseEther("100"));
 
     // sender retracts email #2
     tx = await mailer.connect(sender).retract(2);
@@ -67,5 +68,7 @@ describe("OnChainMail", function () {
       ethers.utils.parseEther("9989"),
       ethers.utils.parseEther("9990")
     );
+
+    expect(await provider.getBalance(mailer.address)).to.eq(0);
   });
 });
