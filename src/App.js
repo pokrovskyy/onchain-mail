@@ -1,32 +1,83 @@
 import './App.css';
+import React, { useState, useEffect } from "react";
+import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+
+//import abiJson from "./abis/abi.json";
+//import addressJson from "./abis/address.json";
+
+import Header from "./components/Header.jsx";
+import ConnectWithMetaMaskButton from "./components/ConnectWithMetaMaskButton.jsx";
+
+import Compose from "./pages/Compose.jsx";
+import Inbox from "./pages/Inbox.jsx";
+
+import {
+  checkIfWalletIsConnected,
+  getSignedContract,
+  updateProviderAndContract,
+} from "./utils/common.js";
 
 function App() {
+  const [contractOwner, setContractOwner] = useState("");
+  const [currentAccount, setCurrentAccount] = useState("");
+  const [provider, setProvider] = useState(null);
+  const [contract, setContract] = useState(null);
+
+  /*const address = addressJson.address;
+  const contractABI = abiJson.abi;
+
+  useEffect(() => {
+    checkIfWalletIsConnected(setCurrentAccount);
+    updateProviderAndContract(address, contractABI, setProvider, setContract);
+  }, []);
+  */
+
+  useEffect(() => {
+    getContractOwner(setContractOwner);
+  }, [currentAccount]);
+
+  const getContractOwner = async (setContractOwner) => {
+    try {
+      //const contract = getSignedContract(address, contractABI);
+
+      if (!contract) {
+        return;
+      }
+
+      const owner = await contract.owner();
+
+      setContractOwner(owner.toLowerCase());
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const isOwner =
+    contractOwner !== "" &&
+    contractOwner.toLowerCase() === currentAccount.toLowerCase();
+
+  const isMetamaskConnected = !!currentAccount;
+
   return (
-    <div className="h-full w-full flex justify-center items-center relative bg-gray-50 overflow-hidden">
-      <div className="relative pt-6 pb-16 sm:pb-24">
-        <main className="mt-16 mx-auto max-w-7xl px-4 sm:mt-24">
-          <div className="text-center">
-            <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
-              <span className="block xl:inline">OnChain</span>{' '}
-              <span className="block text-blue-600 xl:inline">Mail</span>
-            </h1>
-            <p className="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
-              Message any ethereum address
-            </p>
-            <div className="mt-5 max-w-md mx-auto sm:flex sm:justify-center md:mt-8">
-              <div className="rounded-md shadow">
-                <a
-                  href="#"
-                  className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10"
-                >
-                  Connect Wallet
-                </a>
-              </div>
-            </div>
-          </div>
-        </main>
+    <Router>
+      <div id="app-container">
+        <Header isOwner={isOwner} />
+        {!isMetamaskConnected && (
+          <ConnectWithMetaMaskButton
+            setCurrentAccount={setCurrentAccount}
+            isMetamaskConnected={isMetamaskConnected}
+          />
+        )}
+        <Switch>
+          <Route path="/inbox">
+            <Inbox {...{ contractOwner, currentAccount, provider, contract }} />
+          </Route>
+          <Route path="/">
+            <Compose {...{ contractOwner, currentAccount, provider, contract }} />
+          </Route>
+        </Switch>
       </div>
-    </div>
+    </Router>
   );
 }
 
