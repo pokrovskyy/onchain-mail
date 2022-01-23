@@ -17,17 +17,18 @@ contract OnChainMail is ERC721URIStorage {
 
     struct MailDetail {
         bool read;
-        bool encrypted;
+        //bool encrypted;
         uint256 incentiveInWei;
+        address sender;
     }
 
-    mapping(address => uint256) public recipientMailIds;
-    mapping(address => uint256) public senderMailIds;
+    mapping(address => uint256[]) public recipientMailIds;
+    mapping(address => uint256[]) public senderMailIds;
     mapping(uint256 => MailDetail) public mailDetails;
 
     constructor() ERC721("On Chain Mail", "OCM") {}
 
-    function sendEmail(address recipient, bool encrypted, string memory tokenURI)
+    function sendEmail(address recipient, string memory tokenURI)
         payable
         public
         returns (uint256)
@@ -38,48 +39,74 @@ contract OnChainMail is ERC721URIStorage {
         _mint(recipient, newMailId);
         _setTokenURI(newMailId, tokenURI);
 
-        recipientMailIds[recipient] = newMailId;
-        senderMailIds[msg.sender] = newMailId;
-        mailDetails[newMailId] = MailDetail(false, encrypted, msg.value);
+        recipientMailIds[recipient].push(newMailId);
+        senderMailIds[msg.sender].push(newMailId);
+        mailDetails[newMailId] = MailDetail(false, msg.value, msg.sender);
 
         return newMailId;
     }
 
     function markRead(uint256 tokenId)
-        payable
         public
+        reentrancyCheck checkValidRecipient
     {
         MailDetail storage mailDetail = mailDetails[tokenId];
         mailDetail.read = true;
-
-        // transfer incentives to the recipient
+        (bool sent,) = msg.sender.call{value: mailDetail.incentiveInWei}("");
+        require(sent, "Could not process the payout");
     }
 
-    function reroute(uint256 tokenId, address newRecipient)
-        public
-    {
-        MailDetail storage mailDetail = mailDetails[tokenId];
-        if (mailDetail.read == false) {
-            
-        }
-    }
+//    function reroute(uint256 tokenId, address newRecipient)
+//        public
+//    {
+//        MailDetail storage mailDetail = mailDetails[tokenId];
+//        if (mailDetail.read == false) {
+//
+//        }
+//    }
 
     function purge(uint256 tokenId)
-        payable
         public
+        checkValidRecipient
     {
-        _burn(tokenId);
-
         // the incentive deposit is refunded to the sender for the unread message
         MailDetail storage mailDetail = mailDetails[tokenId];
-        if (mailDetail.read == false) {
-            
+        if (!mailDetail.read) {
+            (bool sent,) = mailDetail.sender.call{value: mailDetail.incentiveInWei}("");
+            require(sent, "Could not process the refund");
         }
+        _burn(tokenId);
+        // loop & delete from recipientMailIds
     }
 
     function retract(uint256 tokenId)
         public
     {
+        require(ownerOf(tokenId) == msg.sender, "You have to be email sender");
 
+        // the incentive deposit is refunded to the sender for the unread message
+        MailDetail storage mailDetail = mailDetails[tokenId];
+        require(!mailDetail.read, "Cannot retract read email");
+        (bool sent,) = mailDetail.sender.call{value: mailDetail.incentiveInWei}("");
+        require(sent, "Could not process the refund");
+        _burn(tokenId);
+
+        delete mailDetails[tokenId];
+        // loop & delete from recipientMailIds and senderMailIds
+    }
+
+    // Modifiers
+
+    bool private reentrancyLock;
+    modifier reentrancyCheck() {
+        require(!reentrancyLock, "Reentrancy prevented");
+        reentrancyLock = true;
+        _;
+        reentrancyLock = false;
+    }
+
+    modifier checkValidRecipient(uint tokenId) {
+        require(ownerOf(tokenId) == msg.sender, "You have to be email recipient");
+        _;
     }
 }
