@@ -9,13 +9,13 @@ describe("OnChainMail", function () {
     await mailer.deployed();
 
     // get sample sender and receiver
-    const [sender, recipient] = await ethers.getSigners();
+    const [sender, recipient, other] = await ethers.getSigners();
     let tx;
 
     // sender sends email #1 to receiver (10 ETH reward)
     tx = await mailer
       .connect(sender)
-      .sendEmail(recipient.address, false, "asdfasdfasdf", {
+      .sendEmail(recipient.address, true, "asdfasdfasdf", {
         value: ethers.utils.parseEther("10"),
       });
     await tx.wait();
@@ -27,6 +27,16 @@ describe("OnChainMail", function () {
     expect(await provider.getBalance(recipient.address)).to.within(
       ethers.utils.parseEther("10009"),
       ethers.utils.parseEther("10010")
+    );
+
+    // sender tries to retract after read
+    await expect(mailer.connect(sender).retract(1)).to.be.revertedWith(
+      "Cannot retract read email"
+    );
+
+    // recipient tries to transfer token to someone else
+    await expect(mailer.connect(recipient).transferFrom(recipient.address, other.address, 1)).to.be.revertedWith(
+      "Cannot perform this for encrypted email"
     );
 
     // recipient purges email #1 from inbox

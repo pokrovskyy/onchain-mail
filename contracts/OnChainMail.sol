@@ -133,7 +133,47 @@ contract OnChainMail is ERC721URIStorage {
         return sentMailIds[addr].length;
     }
 
+    function transferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) public override checkTokenExists(tokenId) preventForEncrypted(tokenId) {
+        super.transferFrom(from, to, tokenId);
+    }
+
+    function approve(address to, uint256 tokenId)
+        public
+        override
+        checkTokenExists(tokenId)
+        preventForEncrypted(tokenId)
+    {
+        MailDetail storage mailDetail = mailDetails[tokenId];
+        require(
+            !mailDetail.encrypted,
+            "Cannot approve encrypted mail for transfer"
+        );
+        super.approve(to, tokenId);
+    }
+
+    function _safeTransfer(
+        address from,
+        address to,
+        uint256 tokenId,
+        bytes memory _data
+    ) internal override checkTokenExists(tokenId) preventForEncrypted(tokenId) {
+        super._safeTransfer(from, to, tokenId, _data);
+    }
+
     // Modifiers
+
+    modifier preventForEncrypted(uint256 tokenId) {
+        MailDetail storage mailDetail = mailDetails[tokenId];
+        require(
+            !mailDetail.encrypted,
+            "Cannot perform this for encrypted email"
+        );
+        _;
+    }
 
     bool private reentrancyLock;
     modifier reentrancyCheck() {
