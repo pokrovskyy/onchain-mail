@@ -164,6 +164,10 @@ contract OnChainMail is ERC721URIStorage {
         super._safeTransfer(from, to, tokenId, _data);
     }
 
+    function _baseURI() internal pure override returns (string memory) {
+        return "https://ipfs.io/ipfs/";
+    }
+
     // Modifiers
 
     modifier preventForEncrypted(uint256 tokenId) {
