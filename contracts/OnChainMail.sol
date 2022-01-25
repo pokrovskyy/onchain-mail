@@ -17,85 +17,167 @@ contract OnChainMail is ERC721URIStorage {
 
     struct MailDetail {
         bool read;
-        //bool encrypted;
+        bool encrypted;
         uint256 incentiveInWei;
         address sender;
     }
 
-    mapping(address => uint256[]) public recipientMailIds;
-    mapping(address => uint256[]) public senderMailIds;
-    mapping(uint256 => MailDetail) public mailDetails;
+    mapping(address => uint256[]) public receivedMailIds; // inbox
+    mapping(address => uint256[]) public sentMailIds; // sent mail
+    mapping(uint256 => MailDetail) public mailDetails; // email data
 
     constructor() ERC721("On Chain Mail", "OCM") {}
 
-    function sendEmail(address recipient, string memory tokenURI)
-        payable
-        public
-        returns (uint256)
-    {
+    function sendEmail(
+        address recipient,
+        bool encrypted,
+        string memory tokenURI
+    ) public payable returns (uint256) {
         _tokenIds.increment();
 
         uint256 newMailId = _tokenIds.current();
         _mint(recipient, newMailId);
         _setTokenURI(newMailId, tokenURI);
 
-        recipientMailIds[recipient].push(newMailId);
-        senderMailIds[msg.sender].push(newMailId);
-        mailDetails[newMailId] = MailDetail(false, msg.value, msg.sender);
+        receivedMailIds[recipient].push(newMailId);
+        sentMailIds[msg.sender].push(newMailId);
+        mailDetails[newMailId] = MailDetail(
+            false,
+            encrypted,
+            msg.value,
+            msg.sender
+        );
 
         return newMailId;
     }
 
     function markRead(uint256 tokenId)
         public
-        reentrancyCheck checkValidRecipient
+        reentrancyCheck
+        checkTokenExists(tokenId)
+        checkIsRecipient(tokenId)
     {
         MailDetail storage mailDetail = mailDetails[tokenId];
         mailDetail.read = true;
-        (bool sent,) = msg.sender.call{value: mailDetail.incentiveInWei}("");
+        (bool sent, ) = msg.sender.call{value: mailDetail.incentiveInWei}("");
         require(sent, "Could not process the payout");
     }
 
-//    function reroute(uint256 tokenId, address newRecipient)
-//        public
-//    {
-//        MailDetail storage mailDetail = mailDetails[tokenId];
-//        if (mailDetail.read == false) {
-//
-//        }
-//    }
-
-    function purge(uint256 tokenId)
+    function reroute(uint256 tokenId, address newRecipient)
         public
-        checkValidRecipient
+        checkTokenExists(tokenId)
+        checkIsSender(tokenId)
     {
-        // the incentive deposit is refunded to the sender for the unread message
         MailDetail storage mailDetail = mailDetails[tokenId];
-        if (!mailDetail.read) {
-            (bool sent,) = mailDetail.sender.call{value: mailDetail.incentiveInWei}("");
-            require(sent, "Could not process the refund");
+        require(!mailDetail.encrypted, "Cannot reroute encrypted mail");
+        require(!mailDetail.read, "Cannot reroute read mail");
+        require(
+            ownerOf(tokenId) != newRecipient,
+            "New recipient should differ from the current"
+        );
+        // transfer the token (base ERC721)
+        _transfer(ownerOf(tokenId), newRecipient, tokenId);
+        // update inboxes
+        _deleteFromReceivedEmails(ownerOf(tokenId), tokenId);
+        receivedMailIds[newRecipient].push(tokenId);
+    }
+
+    function purge(uint256 tokenId) public checkTokenExists(tokenId) {
+        MailDetail storage mailDetail = mailDetails[tokenId];
+        require(
+            mailDetail.sender == msg.sender || ownerOf(tokenId) == msg.sender,
+            "Have to be either a sender or a receiver"
+        );
+
+        if (mailDetail.sender == msg.sender)
+            // sender purges from their sent mail
+            _deleteFromSentEmails(mailDetail.sender, tokenId);
+        else {
+            // receiver purges from their inbox
+            if (!mailDetail.read) {
+                // the incentive deposit is refunded to the sender for the unread message
+                (bool sent, ) = mailDetail.sender.call{
+                    value: mailDetail.incentiveInWei
+                }("");
+                require(sent, "Could not process the refund");
+            }
+            _deleteFromReceivedEmails(ownerOf(tokenId), tokenId);
+            _burn(tokenId);
         }
-        _burn(tokenId);
-        // loop & delete from recipientMailIds
     }
 
     function retract(uint256 tokenId)
         public
+        checkTokenExists(tokenId)
+        checkIsSender(tokenId)
     {
-        require(ownerOf(tokenId) == msg.sender, "You have to be email sender");
-
         // the incentive deposit is refunded to the sender for the unread message
         MailDetail storage mailDetail = mailDetails[tokenId];
         require(!mailDetail.read, "Cannot retract read email");
-        (bool sent,) = mailDetail.sender.call{value: mailDetail.incentiveInWei}("");
+        (bool sent, ) = mailDetail.sender.call{
+            value: mailDetail.incentiveInWei
+        }("");
         require(sent, "Could not process the refund");
-        _burn(tokenId);
 
+        _deleteFromReceivedEmails(ownerOf(tokenId), tokenId);
+        _deleteFromSentEmails(mailDetail.sender, tokenId);
         delete mailDetails[tokenId];
-        // loop & delete from recipientMailIds and senderMailIds
+        _burn(tokenId);
+    }
+
+    function receivedMailCount(address addr) external view returns (uint256) {
+        return receivedMailIds[addr].length;
+    }
+
+    function sentMailCount(address addr) external view returns (uint256) {
+        return sentMailIds[addr].length;
+    }
+
+    function transferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) public override checkTokenExists(tokenId) preventForEncrypted(tokenId) {
+        super.transferFrom(from, to, tokenId);
+    }
+
+    function approve(address to, uint256 tokenId)
+        public
+        override
+        checkTokenExists(tokenId)
+        preventForEncrypted(tokenId)
+    {
+        MailDetail storage mailDetail = mailDetails[tokenId];
+        require(
+            !mailDetail.encrypted,
+            "Cannot approve encrypted mail for transfer"
+        );
+        super.approve(to, tokenId);
+    }
+
+    function _safeTransfer(
+        address from,
+        address to,
+        uint256 tokenId,
+        bytes memory _data
+    ) internal override checkTokenExists(tokenId) preventForEncrypted(tokenId) {
+        super._safeTransfer(from, to, tokenId, _data);
+    }
+
+    function _baseURI() internal pure override returns (string memory) {
+        return "https://ipfs.io/ipfs/";
     }
 
     // Modifiers
+
+    modifier preventForEncrypted(uint256 tokenId) {
+        MailDetail storage mailDetail = mailDetails[tokenId];
+        require(
+            !mailDetail.encrypted,
+            "Cannot perform this for encrypted email"
+        );
+        _;
+    }
 
     bool private reentrancyLock;
     modifier reentrancyCheck() {
@@ -105,8 +187,49 @@ contract OnChainMail is ERC721URIStorage {
         reentrancyLock = false;
     }
 
-    modifier checkValidRecipient(uint tokenId) {
-        require(ownerOf(tokenId) == msg.sender, "You have to be email recipient");
+    modifier checkIsRecipient(uint256 tokenId) {
+        require(
+            ownerOf(tokenId) == msg.sender,
+            "You have to be email recipient"
+        );
         _;
+    }
+
+    modifier checkIsSender(uint256 tokenId) {
+        require(
+            mailDetails[tokenId].sender == msg.sender,
+            "You have to be email sender"
+        );
+        _;
+    }
+
+    modifier checkTokenExists(uint256 tokenId) {
+        require(
+            tokenId > 0 && tokenId <= _tokenIds.current(),
+            "Non-existent email"
+        );
+        _;
+    }
+
+    // Private functions
+
+    function _deleteFromReceivedEmails(address addr, uint256 tokenId) private {
+        _deleteTokenFromArray(receivedMailIds[addr], tokenId);
+    }
+
+    function _deleteFromSentEmails(address addr, uint256 tokenId) private {
+        _deleteTokenFromArray(sentMailIds[addr], tokenId);
+    }
+
+    function _deleteTokenFromArray(uint256[] storage arr, uint256 tokenId)
+        private
+    {
+        for (uint256 i = 0; i < arr.length; i++)
+            if (arr[i] == tokenId) {
+                // delete only nullifies so need to pop from array to resize it
+                arr[i] = arr[arr.length - 1];
+                arr.pop();
+                return;
+            }
     }
 }
