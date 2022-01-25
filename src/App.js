@@ -1,55 +1,83 @@
-import { useState } from 'react';
-import { ethers } from 'ethers'
 import './App.css';
-import OnChainMail from './artifacts/contracts/OnChainMail.sol/OnChainMail.json'
+import React, { useState, useEffect } from "react";
+import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 
-const greeterAddress = "0x75E949B8e65c3FcE60EF036ef0891Cd7D51DEbE1"
+//import abiJson from "./abis/abi.json";
+//import addressJson from "./abis/address.json";
+
+import Header from "./components/Header.jsx";
+import ConnectWithMetaMaskButton from "./components/ConnectWithMetaMaskButton.jsx";
+
+import Compose from "./pages/Compose.jsx";
+import Inbox from "./pages/Inbox.jsx";
+
+import {
+  checkIfWalletIsConnected,
+  getSignedContract,
+  updateProviderAndContract,
+} from "./utils/common.js";
 
 function App() {
-  const [greeting, setGreetingValue] = useState()
+  const [contractOwner, setContractOwner] = useState("");
+  const [currentAccount, setCurrentAccount] = useState("");
+  const [provider, setProvider] = useState(null);
+  const [contract, setContract] = useState(null);
 
-  async function requestAccount() {
-    await window.ethereum.request({ method: 'eth_requestAccounts' });
-  }
+  /*const address = addressJson.address;
+  const contractABI = abiJson.abi;
 
-  async function fetchGreeting() {
-    if (typeof window.ethereum !== 'undefined') {
-      const provider = new ethers.providers.Web3Provider(window.ethereum)
-      const contract = new ethers.Contract(greeterAddress, OnChainMail.abi, provider)
-      try {
-        const data = await contract.greet()
-        console.log('data: ', data)
-      } catch (err) {
-        console.log("Error: ", err)
+  useEffect(() => {
+    checkIfWalletIsConnected(setCurrentAccount);
+    updateProviderAndContract(address, contractABI, setProvider, setContract);
+  }, []);
+  */
+
+  useEffect(() => {
+    getContractOwner(setContractOwner);
+  }, [currentAccount]);
+
+  const getContractOwner = async (setContractOwner) => {
+    try {
+      //const contract = getSignedContract(address, contractABI);
+
+      if (!contract) {
+        return;
       }
-    }  
-  }
 
-  async function setGreeting() {
-    if (!greeting) return
-    if (typeof window.ethereum !== 'undefined') {
-      await requestAccount()
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const signer = provider.getSigner()
-      const contract = new ethers.Contract(greeterAddress, OnChainMail.abi, signer)
-      const transaction = await contract.setGreeting(greeting)
-      await transaction.wait()
-      fetchGreeting()
+      const owner = await contract.owner();
+
+      setContractOwner(owner.toLowerCase());
+    } catch (err) {
+      console.log(err);
     }
-  }
+  };
 
+  const isOwner =
+    contractOwner !== "" &&
+    contractOwner.toLowerCase() === currentAccount.toLowerCase();
+
+  const isMetamaskConnected = !!currentAccount;
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <button onClick={fetchGreeting}>Fetch Greeting</button>
-        <button onClick={setGreeting}>Set Greeting</button>
-        <input 
-          onChange={e => setGreetingValue(e.target.value)} 
-          placeholder="Set greeting" 
-        />
-      </header>
-    </div>
+    <Router>
+      <div id="app-container">
+        <Header isOwner={isOwner} />
+        {!isMetamaskConnected && (
+          <ConnectWithMetaMaskButton
+            setCurrentAccount={setCurrentAccount}
+            isMetamaskConnected={isMetamaskConnected}
+          />
+        )}
+        <Switch>
+          <Route path="/inbox">
+            <Inbox {...{ contractOwner, currentAccount, provider, contract }} />
+          </Route>
+          <Route path="/">
+            <Compose {...{ contractOwner, currentAccount, provider, contract }} />
+          </Route>
+        </Switch>
+      </div>
+    </Router>
   );
 }
 
