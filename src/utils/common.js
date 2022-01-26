@@ -65,43 +65,15 @@ export const connectWallet = async (setCurrentAccount) => {
     }
 }
 
-/*export const getTokenCount = async (contract) => {
+export const sendEmail = async (contract, recipient, encrypted, tokenURI) => {
     try {
         if (!contract) {
             return;
         }
 
-        const result = await contract._tokenIds();
-        return result
-    } catch (error) {
-        console.log(error);
-    }
-};
-
-export const mintNft = async (contract, contractOwner) => {
-    try {
-        if (!contract) {
-            return;
-        }
-
-        const txn = await contract.mint(contractOwner);
+        const txn = await contract.sendEmail(recipient, encrypted, tokenURI);
         await txn.wait();
     } catch (error) {
         console.log(error);
     }
 };
-
-export const buyNft = async (contract, tokenId, price) => {
-    try {
-        if (!contract) {
-            return;
-        }
-
-        const txn = await contract.buyNft(tokenId, {
-            value: ethers.utils.parseEther(price.toString()),
-        });
-        await txn.wait();
-    } catch (error) {
-        console.log(error);
-    }
-};*/
