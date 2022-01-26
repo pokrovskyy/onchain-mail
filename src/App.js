@@ -1,4 +1,3 @@
-import './App.css';
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 
@@ -10,12 +9,15 @@ import ConnectWithMetaMaskButton from "./components/ConnectWithMetaMaskButton.js
 
 import Compose from "./pages/Compose.jsx";
 import Inbox from "./pages/Inbox.jsx";
+import Mail from './pages/Mail';
 
 import {
   checkIfWalletIsConnected,
   getSignedContract,
   updateProviderAndContract,
 } from "./utils/common.js";
+
+import './App.css';
 
 function App() {
   const [contractOwner, setContractOwner] = useState("");
@@ -69,12 +71,15 @@ function App() {
           />
         )}
         <Switch>
-          <Route path="/inbox">
+          <Route exact path="/">
+            <Mail {...{ contractOwner, currentAccount, provider, contract }} />
+          </Route>
+          <Route exact path="/inbox">
             <Inbox {...{ contractOwner, currentAccount, provider, contract }} />
           </Route>
-          <Route path="/">
+          {/* <Route path="/">
             <Compose {...{ contractOwner, currentAccount, provider, contract }} />
-          </Route>
+          </Route> */}
         </Switch>
       </div>
     </Router>
