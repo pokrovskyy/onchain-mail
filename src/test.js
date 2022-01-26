@@ -1,10 +1,16 @@
 const { create } = require('ipfs-http-client');
 
-async function saveText() {
-    let client = create({host: 'ipfs.infura.io', port: 5001, protocol:'https'});
-    let fileAdded = await client.add('Hello world!');
-    console.log(fileAdded);
+const message = 'Hello World!';
+
+async function saveEmailToIPFS(message) {
+    let metaData = '{"message": ' + message + '}'
+
+    console.log(metaData);
+
+    let ipfsClient = create({host: 'ipfs.infura.io', port: 5001, protocol:'https'});
+    let fileAdded = await ipfsClient.add(metaData);
     console.log(fileAdded.path);
+    return fileAdded.path;
 }
 
-saveText();
+saveEmailToIPFS(message);
