@@ -1,11 +1,35 @@
 import { useState } from 'react';
 import { PencilAltIcon, InboxIcon } from '@heroicons/react/outline'
-
-import ContractABI from '../abi/Contract.json'
+import { ethers } from 'ethers'
+// import ContractABI from '../abi/Contract.json'
+import onChainMail from '../artifacts/contracts/OnChainMail.sol/OnChainMail.json'
 
 function classNames(...classes) {
 	return classes.filter(Boolean).join(' ')
 }
+
+// Update with the contract address logged out to the CLI when it was deployed 
+const onChainMailAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+// const IPFS = require('ipfs')
+
+let text = '{\
+    "title": "Asset Metadata",\
+    "type": "object",\
+    "properties": {\
+        "name": {\
+            "type": "string",\
+            "description": "Identifies the asset to which this NFT represents"\
+        },\
+        "description": {\
+            "type": "string",\
+            "description": "Describes the asset to which this NFT represents"\
+        },\
+        "image": {\
+            "type": "string",\
+            "description": "A URI pointing to a resource with mime type image/* representing the asset to which this NFT represents. Consider making any images at a width between 320 and 1080 pixels and aspect ratio between 1.91:1 and 4:5 inclusive."\
+        }\
+    }\
+}';
 
 const Mail = ({ currentAccount, contractOwner }) => {
 	const [navigation, setNavigation] = useState({
@@ -16,7 +40,7 @@ const Mail = ({ currentAccount, contractOwner }) => {
 	const [address, setAddress] = useState('');
 	const [incentive, setIncentive] = useState(0);
 	const [message, setMessage] = useState('');
-	const [contract, setContract] = useState(null);
+	// const [contract, setContract] = useState(null);
 
 	const isMetamaskConnected = !!currentAccount;
 
@@ -24,15 +48,58 @@ const Mail = ({ currentAccount, contractOwner }) => {
 		return null;
 	}
 
-	const getContractData = async wallet => {
-		const networkId = await window.web3.eth.net.getId();
+	// const getContractData = async wallet => {
+	// 	const networkId = await window.web3.eth.net.getId();
+	// 	const abi = ContractABI.abi;
+	// 	const contractAddress = ContractABI.networks[networkId].address;
+	// 	const onChainMailContract = new window.web3.eth.Contract(abi, contractAddress);
 
-		const abi = ContractABI.abi;
-		const contractAddress = ContractABI.networks[networkId].address;
-		const onChainMailContract = new window.web3.eth.Contract(abi, contractAddress);
+	// 	setContract(onChainMailContract);
+	// }
 
-		setContract(onChainMailContract);
-	}
+	  // request access to the user's MetaMask account
+	  async function requestAccount() {
+		await window.ethereum.request({ method: 'eth_requestAccounts' });
+	  }
+
+	  async function saveToIPFS () {
+	// 	const node = await IPFS.create({silent: true})
+
+	// 	const cid = await IPFS.add(
+	// 		{ path: 'metadata.json', content: text }, 
+	// 		{ cidVersion: 1, wrapWithDirectory: true, hashAlg: 'sha2-256' }
+	// 	  )
+	  
+	// 	const filesAdded = await node.add({
+	// 	  path: 'metadata.txt',
+	// 	  content: Buffer.from('Hello World 101')
+	// 	})
+	  
+	// 	const fileBuffer = await node.cat(filesAdded[0].hash)	  
+	// 	console.log('Added file contents:', fileBuffer.toString())
+		return ""
+	  }
+
+	// call the smart contract
+	async function sendEmail() {
+		console.log("sendEmail()")		
+		console.log(address, incentive, message)
+		console.log(text)
+
+		let tokenURI = saveToIPFS()
+
+		if (typeof window.ethereum !== 'undefined') {
+			console.log("MetaMask")
+			await requestAccount()
+			const provider = new ethers.providers.Web3Provider(window.ethereum);
+			const signer = provider.getSigner()
+			const contract = new ethers.Contract(onChainMailAddress, onChainMail.abi, signer)
+			const transaction = await contract.sendEmail(address, false, tokenURI)
+			await transaction.wait()
+			console.log(transaction)
+    	}
+	  }
+	
 
 	return (
 		<div className="h-full w-full p-20">
@@ -139,7 +206,7 @@ const Mail = ({ currentAccount, contractOwner }) => {
 								<button
 									type="submit"
 									className="bg-indigo-600 border border-transparent rounded-md shadow-sm py-2 px-4 inline-flex justify-center text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-									onClick={() => console.log(address, incentive, message)}
+									onClick={sendEmail}
 								>
 									Send
 								</button>

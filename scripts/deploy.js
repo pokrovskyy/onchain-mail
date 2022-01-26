@@ -15,7 +15,7 @@ async function main() {
 
   // We get the contract to deploy
   const OnChainMail = await hre.ethers.getContractFactory("OnChainMail");
-  const onchainmail = await OnChainMail.deploy("Welcome to On Chain Mail!");
+  const onchainmail = await OnChainMail.deploy();
 
   await onchainmail.deployed();
 
