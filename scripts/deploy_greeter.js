@@ -14,12 +14,12 @@ async function main() {
   // await hre.run('compile');
 
   // We get the contract to deploy
-  const OCM = await hre.ethers.getContractFactory("OnChainMail");
-  const ocm = await OCM.deploy();
+  const Greeter = await hre.ethers.getContractFactory("Greeter");
+  const greeter = await Greeter.deploy("Hello, Hardhat!");
 
-  await ocm.deployed();
+  await greeter.deployed();
 
-  console.log("OCM deployed to:", ocm.address);
+  console.log("Greeter deployed to:", greeter.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
