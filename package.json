@@ -2,7 +2,12 @@
   "name": "onchainmail-dapp",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=15.0.0"
+  },
+  "engineStrict": true,
   "dependencies": {
+    "@heroicons/react": "^1.0.5",
     "@nomiclabs/hardhat-ethers": "^2.0.4",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
     "@openzeppelin/contracts": "^4.4.2",
@@ -13,6 +18,7 @@
     "ethereum-waffle": "^3.4.0",
     "ethers": "^5.5.3",
     "hardhat": "^2.8.2",
+    "ipfs-http-client": "^55.0.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-router-dom": "^5.3.0",
