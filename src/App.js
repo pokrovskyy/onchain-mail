@@ -3,10 +3,12 @@ import { useState } from 'react';
 import { ethers } from 'ethers'
 import Greeter from './artifacts/contracts/Greeter.sol/Greeter.json'
 import onChainMail from './artifacts/contracts/OnChainMail.sol/OnChainMail.json'
+import {storeMetadata} from './utils/metadata';
+import {getSignedContract, checkIfWalletIsConnected} from './utils/common';
 
 // Update with the contract address logged out to the CLI when it was deployed
 const greeterAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3" 
-const ocmAddress = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+const ocmAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3"
 
 function App() {
   // store greeting in local state  
@@ -49,22 +51,18 @@ function App() {
   }
 
 	async function sendEmail() {
-		console.log("sendEmail()")
-		console.log(address, incentive, message)
+    console.log("sendEmail()")
 
-		//let tokenURI = await saveToIPFS()
-    let tokenURI = 'test string'
+    let tokenURI = storeMetadata(message)
+    console.log(tokenURI)
 
-		if (typeof window.ethereum !== 'undefined') {
-      await requestAccount()
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const signer = provider.getSigner()
-      const contract = new ethers.Contract(ocmAddress, onChainMail.abi, signer)
-      const transaction = await contract.sendEmail(address, false, tokenURI)
-      await transaction.wait()
-    }
+    // checkIfWalletIsConnected();
+    await requestAccount()
+      
+    const contract = getSignedContract(ocmAddress, onChainMail.abi)
+    const transaction = await contract.sendEmail(address, false, tokenURI)
+    await transaction.wait()
 	}
-
 
   return (
     <div className="App">
