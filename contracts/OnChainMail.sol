@@ -134,11 +134,11 @@ contract OnChainMail is ERC721URIStorage {
         encryptionPublicKeys[msg.sender] = "";
     }
 
-    function receivedMailCount(address addr) external view returns (uint256) {
+    function receivedMailCount(address addr) public view returns (uint256) {
         return receivedMailIds[addr].length;
     }
 
-    function sentMailCount(address addr) external view returns (uint256) {
+    function sentMailCount(address addr) public view returns (uint256) {
         return sentMailIds[addr].length;
     }
 
@@ -175,6 +175,16 @@ contract OnChainMail is ERC721URIStorage {
 
     function _baseURI() internal pure override returns (string memory) {
         return "https://ipfs.io/ipfs/";
+    }
+
+    function getReceivedMail(address recipient) public view returns (uint256[] memory) {
+        return new uint256[](10);
+
+        // uint256[] memory results = new uint256[](receivedMailCount(recipient));
+
+        // for (uint256 i = 0; i < receivedMailCount(recipient); i++) {
+        //     results[i] = receivedMailIds[recipient][i];
+        // }
     }
 
     // Modifiers

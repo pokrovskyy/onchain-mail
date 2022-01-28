@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { PencilAltIcon, InboxIcon } from '@heroicons/react/outline'
 import { ethers } from 'ethers'
-import { create } from 'ipfs-http-client'
 
-// import ContractABI from '../abi/Contract.json'
+import Inbox from './Inbox'
+import { storeMetadata } from '../utils/metadata'
 import onChainMail from '../artifacts/contracts/OnChainMail.sol/OnChainMail.json'
 
 function classNames(...classes) {
@@ -12,7 +12,6 @@ function classNames(...classes) {
 
 // Update with the contract address logged out to the CLI when it was deployed 
 const onChainMailAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3"
-// const IPFS = require('ipfs')
 
 const Mail = ({ currentAccount, contractOwner }) => {
 	const [navigation, setNavigation] = useState({
@@ -23,7 +22,6 @@ const Mail = ({ currentAccount, contractOwner }) => {
 	const [address, setAddress] = useState('');
 	const [incentive, setIncentive] = useState(0);
 	const [message, setMessage] = useState('');
-	// const [contract, setContract] = useState(null);
 
 	const isMetamaskConnected = !!currentAccount;
 
@@ -31,69 +29,65 @@ const Mail = ({ currentAccount, contractOwner }) => {
 		return null;
 	}
 
-	// const getContractData = async wallet => {
-	// 	const networkId = await window.web3.eth.net.getId();
-	// 	const abi = ContractABI.abi;
-	// 	const contractAddress = ContractABI.networks[networkId].address;
-	// 	const onChainMailContract = new window.web3.eth.Contract(abi, contractAddress);
-
-	// 	setContract(onChainMailContract);
-	// }
-
 	// request access to the user's MetaMask account
 	async function requestAccount() {
 		await window.ethereum.request({ method: 'eth_requestAccounts' });
 	}
 
-	async function saveToIPFS() {
-		let metaData = {
-			message,
-			timestamp: Date.now().toString(),
-		}
-
-		console.log('Metadata:', metaData);
-
-		let fileAdded = { path: '' };
-		try {
-			// let ipfsClient = create({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' });
-			let ipfsClient = window.IpfsHttpClient({ host: 'ipfs.infura', port: 5001, protocol: 'https' })
-
-			fileAdded = await ipfsClient.add(JSON.stringify(metaData));
-		}
-		catch (error) {
-			console.log('saveToIPFS Err:', error);
-		}
-
-		console.log('CID:', fileAdded.path);
-		return fileAdded.path;
-	}
-
 	// call the smart contract
-	async function sendEmail() {
+	async function sendEmail(event) {
+		event.preventDefault()
 		console.log("sendEmail()")
 		console.log(address, incentive, message)
 
-		let tokenURI = await saveToIPFS()
+		let tokenURI = ''
+
+		try {
+			tokenURI = await storeMetadata(message)
+		}
+		catch (error) {
+			console.log('Error storing metadata:', error)
+		}
 
 		if (typeof window.ethereum !== 'undefined') {
-			console.log('Begin contract call...')
+			console.log('Begin send email flow...')
 			await requestAccount()
 			const provider = new ethers.providers.Web3Provider(window.ethereum);
 			const signer = provider.getSigner()
 			const contract = new ethers.Contract(onChainMailAddress, onChainMail.abi, signer)
-			console.log('Contract', contract)
-			console.log('ABI', onChainMail.abi)
+
 			try {
-				const transaction = await contract.sendEmail(address, false, tokenURI)
+				const transaction = await contract.sendEmail(address, false, tokenURI, { value: ethers.utils.parseEther(incentive) })
 				await transaction.wait()
-				console.log(transaction)
+				console.log('Sent mail:', transaction)
 			}
 			catch (error) {
-				console.log('Transaction Err:', error)
+				console.log('Send Mail Err:', error)
 			}
 		}
 	}
 
+	async function getInbox() {
+		if (typeof window.ethereum !== 'undefined') {
+			console.log('Begin get inbox flow...')
+			console.log('Current account:', currentAccount, typeof currentAccount)
+
+			const provider = new ethers.providers.Web3Provider(window.ethereum);
+			const signer = provider.getSigner()
+			const contract = new ethers.Contract(onChainMailAddress, onChainMail.abi, signer)
+
+			console.log(contract)
+
+			try {
+				const mailIds = await contract.receivedMailCount(currentAccount)
+				await mailIds.wait()
+				console.log('Mail Ids:', mailIds)
+			}
+			catch (error) {
+				console.log('Get inbox err:', error)
+			}
+		}
+	}
 
 	return (
 		<div className="h-full w-full p-20">
@@ -113,6 +107,10 @@ const Mail = ({ currentAccount, contractOwner }) => {
 									)}
 									aria-current={item.current ? 'page' : undefined}
 									onClick={() => {
+										if (k === 'inbox') {
+											getInbox()
+										}
+
 										const newNav = { ...navigation };
 
 										Object.keys(newNav).map(k => {
@@ -209,8 +207,10 @@ const Mail = ({ currentAccount, contractOwner }) => {
 						</div>
 					</form>
 				</div>}
-				{showInbox && <div>
-					<p>You have no mail</p>
+				{showInbox && <div className="space-y-6 sm:px-6 lg:px-0 lg:col-span-9">
+					<div className="shadow sm:rounded-md sm:overflow-hidden">
+						<p>You have no mail</p>
+					</div>
 				</div>}
 			</div>
 		</div>

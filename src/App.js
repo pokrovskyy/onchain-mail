@@ -1,14 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 
-//import abiJson from "./abis/abi.json";
-//import addressJson from "./abis/address.json";
-
 import Header from "./components/Header.jsx";
 import ConnectWithMetaMaskButton from "./components/ConnectWithMetaMaskButton.jsx";
 
-import Compose from "./pages/Compose.jsx";
-import Inbox from "./pages/Inbox.jsx";
+import Inbox from "./pages/Inbox";
 import Mail from './pages/Mail';
 
 import {
@@ -77,9 +73,6 @@ function App() {
           <Route exact path="/inbox">
             <Inbox {...{ contractOwner, currentAccount, provider, contract }} />
           </Route>
-          {/* <Route path="/">
-            <Compose {...{ contractOwner, currentAccount, provider, contract }} />
-          </Route> */}
         </Switch>
       </div>
     </Router>
