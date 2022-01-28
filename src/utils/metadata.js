@@ -122,7 +122,3 @@ async function _decryptMessage(encryptedMessage) {
 function _encryptMessage(message, pubKey) {
   return encrypt(pubKey, { data: message }, "x25519-xsalsa20-poly1305");
 }
-
-// storeMetadata("Hello world!", "TPHdZEoxCu9GT1VAsnDDQkoCqvISGCxPZ/P8Gb7DCwU=").then(console.log)
-
-// getMessageData('QmPoEhjbmcapt38QpUKNFH7LrsYsiYdDbHE7X5rkXTnG2C').then(console.log)
