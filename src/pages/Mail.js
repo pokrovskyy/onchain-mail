@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { PencilAltIcon, InboxIcon } from '@heroicons/react/outline'
 import { ethers } from 'ethers'
+import { create } from 'ipfs-http-client'
+
 // import ContractABI from '../abi/Contract.json'
 import onChainMail from '../artifacts/contracts/OnChainMail.sol/OnChainMail.json'
 
@@ -12,29 +14,10 @@ function classNames(...classes) {
 const onChainMailAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3"
 // const IPFS = require('ipfs')
 
-let text = '{\
-    "title": "Asset Metadata",\
-    "type": "object",\
-    "properties": {\
-        "name": {\
-            "type": "string",\
-            "description": "Identifies the asset to which this NFT represents"\
-        },\
-        "description": {\
-            "type": "string",\
-            "description": "Describes the asset to which this NFT represents"\
-        },\
-        "image": {\
-            "type": "string",\
-            "description": "A URI pointing to a resource with mime type image/* representing the asset to which this NFT represents. Consider making any images at a width between 320 and 1080 pixels and aspect ratio between 1.91:1 and 4:5 inclusive."\
-        }\
-    }\
-}';
-
 const Mail = ({ currentAccount, contractOwner }) => {
 	const [navigation, setNavigation] = useState({
 		compose: { key: 'compose', name: 'Compose', icon: PencilAltIcon, current: true },
-		inbox: { key:'inbox', name: 'Inbox', icon: InboxIcon, current: false },
+		inbox: { key: 'inbox', name: 'Inbox', icon: InboxIcon, current: false },
 	})
 	const [showInbox, setShowInbox] = useState(false);
 	const [address, setAddress] = useState('');
@@ -57,49 +40,60 @@ const Mail = ({ currentAccount, contractOwner }) => {
 	// 	setContract(onChainMailContract);
 	// }
 
-	  // request access to the user's MetaMask account
-	  async function requestAccount() {
+	// request access to the user's MetaMask account
+	async function requestAccount() {
 		await window.ethereum.request({ method: 'eth_requestAccounts' });
-	  }
+	}
 
-	  async function saveToIPFS () {
-	// 	const node = await IPFS.create({silent: true})
+	async function saveToIPFS() {
+		let metaData = {
+			message,
+			timestamp: Date.now().toString(),
+		}
 
-	// 	const cid = await IPFS.add(
-	// 		{ path: 'metadata.json', content: text }, 
-	// 		{ cidVersion: 1, wrapWithDirectory: true, hashAlg: 'sha2-256' }
-	// 	  )
-	  
-	// 	const filesAdded = await node.add({
-	// 	  path: 'metadata.txt',
-	// 	  content: Buffer.from('Hello World 101')
-	// 	})
-	  
-	// 	const fileBuffer = await node.cat(filesAdded[0].hash)	  
-	// 	console.log('Added file contents:', fileBuffer.toString())
-		return ""
-	  }
+		console.log('Metadata:', metaData);
+
+		let fileAdded = { path: '' };
+		try {
+			// let ipfsClient = create({ host: 'ipfs.infura.io', port: 5001, protocol: 'https' });
+			let ipfsClient = window.IpfsHttpClient({ host: 'ipfs.infura', port: 5001, protocol: 'https' })
+
+			fileAdded = await ipfsClient.add(JSON.stringify(metaData));
+		}
+		catch (error) {
+			console.log('saveToIPFS Err:', error);
+		}
+
+		console.log('CID:', fileAdded.path);
+		return fileAdded.path;
+	}
 
 	// call the smart contract
 	async function sendEmail() {
-		console.log("sendEmail()")		
+		console.log("sendEmail()")
 		console.log(address, incentive, message)
-		console.log(text)
 
-		let tokenURI = saveToIPFS()
+		let tokenURI = await saveToIPFS()
 
 		if (typeof window.ethereum !== 'undefined') {
-			console.log("MetaMask")
+			console.log('Begin contract call...')
 			await requestAccount()
 			const provider = new ethers.providers.Web3Provider(window.ethereum);
 			const signer = provider.getSigner()
 			const contract = new ethers.Contract(onChainMailAddress, onChainMail.abi, signer)
-			const transaction = await contract.sendEmail(address, false, tokenURI)
-			await transaction.wait()
-			console.log(transaction)
-    	}
-	  }
-	
+			console.log('Contract', contract)
+			console.log('ABI', onChainMail.abi)
+			try {
+				const transaction = await contract.sendEmail(address, false, tokenURI)
+				await transaction.wait()
+				console.log(transaction)
+			}
+			catch (error) {
+				console.log('Transaction Err:', error)
+			}
+		}
+	}
+
 
 	return (
 		<div className="h-full w-full p-20">
@@ -109,43 +103,44 @@ const Mail = ({ currentAccount, contractOwner }) => {
 						{Object.keys(navigation).map((k) => {
 							const item = navigation[k];
 							return (
-							<div
-								key={item.name}
-								className={classNames(
-									item.current
-										? 'bg-gray-50 text-indigo-700 hover:text-indigo-700 hover:bg-white'
-										: 'text-gray-900 hover:text-gray-900 hover:bg-gray-50',
-									'group rounded-md px-3 py-2 flex items-center text-sm font-medium'
-								)}
-								aria-current={item.current ? 'page' : undefined}
-								onClick={() => {
-									const newNav = {...navigation};
-
-									Object.keys(newNav).map(k => {
-										return newNav[k].current = newNav[k].key === item.key
-									})
-
-									setNavigation(newNav);
-									setShowInbox(!showInbox);
-								}}
-							>
-								<item.icon
+								<div
+									key={item.name}
 									className={classNames(
 										item.current
-											? 'text-indigo-500 group-hover:text-indigo-500'
-											: 'text-gray-400 group-hover:text-gray-500',
-										'flex-shrink-0 -ml-1 mr-3 h-6 w-6'
+											? 'bg-gray-50 text-indigo-700 hover:text-indigo-700 hover:bg-white'
+											: 'text-gray-900 hover:text-gray-900 hover:bg-gray-50',
+										'group rounded-md px-3 py-2 flex items-center text-sm font-medium'
 									)}
-									aria-hidden="true"
-								/>
-								<span className="truncate">{item.name}</span>
-							</div>
-						)})}
+									aria-current={item.current ? 'page' : undefined}
+									onClick={() => {
+										const newNav = { ...navigation };
+
+										Object.keys(newNav).map(k => {
+											return newNav[k].current = newNav[k].key === item.key
+										})
+
+										setNavigation(newNav);
+										setShowInbox(!showInbox);
+									}}
+								>
+									<item.icon
+										className={classNames(
+											item.current
+												? 'text-indigo-500 group-hover:text-indigo-500'
+												: 'text-gray-400 group-hover:text-gray-500',
+											'flex-shrink-0 -ml-1 mr-3 h-6 w-6'
+										)}
+										aria-hidden="true"
+									/>
+									<span className="truncate">{item.name}</span>
+								</div>
+							)
+						})}
 					</nav>
 				</aside>
 
 				{!showInbox && <div className="space-y-6 sm:px-6 lg:px-0 lg:col-span-9">
-					<form action="#" method="POST">
+					<form>
 						<div className="shadow sm:rounded-md sm:overflow-hidden">
 							<div className="bg-white py-6 px-4 space-y-6 sm:p-6">
 								<div>
@@ -172,7 +167,7 @@ const Mail = ({ currentAccount, contractOwner }) => {
 
 									<div className="col-span-6 sm:col-span-4">
 										<label htmlFor="email-address" className="block text-sm font-medium text-gray-700">
-											Incentive	
+											Incentive
 										</label>
 										<input
 											type="number"
@@ -186,7 +181,7 @@ const Mail = ({ currentAccount, contractOwner }) => {
 
 									<div className="col-span-3">
 										<label htmlFor="about" className="block text-sm font-medium text-gray-700">
-											Message	
+											Message
 										</label>
 										<div className="mt-1">
 											<textarea
@@ -216,7 +211,7 @@ const Mail = ({ currentAccount, contractOwner }) => {
 				</div>}
 				{showInbox && <div>
 					<p>You have no mail</p>
-					</div>}
+				</div>}
 			</div>
 		</div>
 	)
