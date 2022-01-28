@@ -25,6 +25,7 @@ contract OnChainMail is ERC721URIStorage {
     mapping(address => uint256[]) public receivedMailIds; // inbox
     mapping(address => uint256[]) public sentMailIds; // sent mail
     mapping(uint256 => MailDetail) public mailDetails; // email data
+    mapping(address => string) public encryptionPublicKeys; // encryption public keys 
 
     constructor() ERC721("On Chain Mail", "OCM") {}
 
@@ -123,6 +124,14 @@ contract OnChainMail is ERC721URIStorage {
         _deleteFromSentEmails(mailDetail.sender, tokenId);
         delete mailDetails[tokenId];
         _burn(tokenId);
+    }
+
+    function addEncryptionPublicKey(string memory key) external {
+        encryptionPublicKeys[msg.sender] = key;
+    }
+
+    function clearEncryptionPublicKey() external {
+        encryptionPublicKeys[msg.sender] = "";
     }
 
     function receivedMailCount(address addr) external view returns (uint256) {

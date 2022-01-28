@@ -80,5 +80,14 @@ describe("OnChainMail", function () {
     );
 
     expect(await provider.getBalance(mailer.address)).to.eq(0);
+
+    // test adding/reading encryption key
+    let pubKey = "this_is_my_public_key";
+    tx = await mailer.connect(sender).addEncryptionPublicKey(pubKey);
+    expect((await mailer.encryptionPublicKeys(sender.address))).to.eq(pubKey);
+
+    // test clearing encryption key
+    tx = await mailer.connect(sender).clearEncryptionPublicKey();
+    expect((await mailer.encryptionPublicKeys(sender.address))).to.eq('');
   });
 });
