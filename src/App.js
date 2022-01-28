@@ -16,6 +16,7 @@ function App() {
   const [address, setAddress] = useState('');
 	const [incentive, setIncentive] = useState(0);
 	const [message, setMessage] = useState('');
+  const [account, setAccount] = useState('');
 
   // request access to the user's MetaMask account
   async function requestAccount() {
@@ -56,8 +57,8 @@ function App() {
     let tokenURI = storeMetadata(message)
     console.log(tokenURI)
 
-    // checkIfWalletIsConnected();
-    await requestAccount()
+    // checkIfWalletIsConnected(setAccount);
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
       
     const contract = getSignedContract(ocmAddress, onChainMail.abi)
     const transaction = await contract.sendEmail(address, false, tokenURI)
