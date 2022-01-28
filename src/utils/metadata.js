@@ -45,9 +45,9 @@ export async function storeMetadata(message, pubKey) {
 ///
 /// Retrieve message content
 ///
-export async function getMessageData(metadataHash) {
+export async function getMessageData(metadataURI) {
   let metadata = await (
-    await fetch("https://ipfs.io/ipfs/" + metadataHash)
+    await fetch(metadataURI)
   ).json();
 
   if (metadata.plain_content)

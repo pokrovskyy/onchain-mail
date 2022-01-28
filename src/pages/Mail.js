@@ -11,7 +11,7 @@ function classNames(...classes) {
 }
 
 // Update with the contract address logged out to the CLI when it was deployed 
-const onChainMailAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+const onChainMailAddress = "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
 
 const Mail = ({ currentAccount, contractOwner }) => {
 	const [navigation, setNavigation] = useState({
@@ -69,22 +69,27 @@ const Mail = ({ currentAccount, contractOwner }) => {
 
 	async function getInbox() {
 		if (typeof window.ethereum !== 'undefined') {
-			console.log('Begin get inbox flow...')
-			console.log('Current account:', currentAccount, typeof currentAccount)
-
-			const provider = new ethers.providers.Web3Provider(window.ethereum)
+			console.log('Begin send email flow...')
+			await requestAccount()
+			const provider = new ethers.providers.Web3Provider(window.ethereum);
 			const signer = provider.getSigner()
 			const contract = new ethers.Contract(onChainMailAddress, onChainMail.abi, signer)
 
-			console.log(contract)
-
 			try {
-				const mailIds = await contract.receivedMailCount(currentAccount)
-				await mailIds.wait()
-				console.log('Mail Ids:', mailIds)
+				const mailIds = await contract.getReceivedMail(currentAccount)
+				console.log('transaction', mailIds)
+				const mailDetails = await Promise.all(mailIds.map(id => {
+					return contract.mailDetails(id);
+				}))
+				const tokenURIs = await Promise.all(mailIds.map(id => {
+					return contract.tokenURI(id)
+				}))
+				console.log('Details', mailDetails);
+				console.log('URIs', tokenURIs);
+				// call getMessageData
 			}
 			catch (error) {
-				console.log('Get inbox err:', error)
+				console.log('Err:', error)
 			}
 		}
 	}

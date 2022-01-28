@@ -178,13 +178,13 @@ contract OnChainMail is ERC721URIStorage {
     }
 
     function getReceivedMail(address recipient) public view returns (uint256[] memory) {
-        return new uint256[](10);
+        uint256[] memory results = new uint256[](receivedMailCount(recipient));
 
-        // uint256[] memory results = new uint256[](receivedMailCount(recipient));
+        for (uint256 i = 0; i < receivedMailCount(recipient); i++) {
+            results[i] = receivedMailIds[recipient][i];
+        }
 
-        // for (uint256 i = 0; i < receivedMailCount(recipient); i++) {
-        //     results[i] = receivedMailIds[recipient][i];
-        // }
+        return results;
     }
 
     // Modifiers
