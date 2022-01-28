@@ -72,7 +72,7 @@ const Mail = ({ currentAccount, contractOwner }) => {
 			console.log('Begin get inbox flow...')
 			console.log('Current account:', currentAccount, typeof currentAccount)
 
-			const provider = new ethers.providers.Web3Provider(window.ethereum);
+			const provider = new ethers.providers.Web3Provider(window.ethereum)
 			const signer = provider.getSigner()
 			const contract = new ethers.Contract(onChainMailAddress, onChainMail.abi, signer)
 
