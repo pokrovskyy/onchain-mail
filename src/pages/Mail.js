@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { PencilAltIcon, InboxIcon } from '@heroicons/react/outline'
 import { ethers } from 'ethers'
 
+import Compose from './Compose'
 import Inbox from './Inbox'
 import { storeMetadata } from '../utils/metadata'
 import onChainMail from '../artifacts/contracts/OnChainMail.sol/OnChainMail.json'
@@ -18,10 +19,13 @@ const Mail = ({ currentAccount, contractOwner }) => {
 		compose: { key: 'compose', name: 'Compose', icon: PencilAltIcon, current: true },
 		inbox: { key: 'inbox', name: 'Inbox', icon: InboxIcon, current: false },
 	})
+	const [showCompose, setShowCompose] = useState(true);
 	const [showInbox, setShowInbox] = useState(false);
 	const [address, setAddress] = useState('');
 	const [incentive, setIncentive] = useState(0);
 	const [message, setMessage] = useState('');
+	const [mailMetadata, setMailMetadata] = useState([])
+	const [isLoading, setIsLoading] = useState(false)
 
 	const isMetamaskConnected = !!currentAccount;
 
@@ -68,8 +72,10 @@ const Mail = ({ currentAccount, contractOwner }) => {
 	}
 
 	async function getInbox() {
+		setIsLoading(true);
 		if (typeof window.ethereum !== 'undefined') {
-			console.log('Begin send email flow...')
+			console.log('Begin get inbox flow...')
+
 			await requestAccount()
 			const provider = new ethers.providers.Web3Provider(window.ethereum);
 			const signer = provider.getSigner()
@@ -77,21 +83,41 @@ const Mail = ({ currentAccount, contractOwner }) => {
 
 			try {
 				const mailIds = await contract.getReceivedMail(currentAccount)
-				console.log('transaction', mailIds)
+
 				const mailDetails = await Promise.all(mailIds.map(id => {
-					return contract.mailDetails(id);
+					return contract.mailDetails(id)
 				}))
+
 				const tokenURIs = await Promise.all(mailIds.map(id => {
 					return contract.tokenURI(id)
 				}))
-				console.log('Details', mailDetails);
-				console.log('URIs', tokenURIs);
-				// call getMessageData
+
+				const mailMetadata = mailDetails.map((detail, idx) => {
+					const [read, encrypted, incentiveInWei, sender] = detail
+
+					return {
+						id: mailIds[idx],
+						read,
+						encrypted,
+						incentiveInWei,
+						sender,
+						tokenURI: tokenURIs[idx],
+					}
+				})
+
+				console.log('Mail metadata', mailMetadata)
+
+				setMailMetadata(mailMetadata)
 			}
 			catch (error) {
 				console.log('Err:', error)
 			}
+			finally{
+				setIsLoading(false);
+			}
 		}
+
+		setIsLoading(false);
 	}
 
 	return (
@@ -105,9 +131,7 @@ const Mail = ({ currentAccount, contractOwner }) => {
 								<div
 									key={item.name}
 									className={classNames(
-										item.current
-											? 'bg-gray-50 text-indigo-700 hover:text-indigo-700 hover:bg-white'
-											: 'text-gray-900 hover:text-gray-900 hover:bg-gray-50',
+										'text-blue-700 hover:text-blue-700 hover:bg-white',
 										'group rounded-md px-3 py-2 flex items-center text-sm font-medium'
 									)}
 									aria-current={item.current ? 'page' : undefined}
@@ -123,13 +147,16 @@ const Mail = ({ currentAccount, contractOwner }) => {
 										})
 
 										setNavigation(newNav);
-										setShowInbox(!showInbox);
+										setShowCompose(k === 'compose');
+										setShowInbox(k === 'inbox');
+
+										console.log(showInbox)
 									}}
 								>
 									<item.icon
 										className={classNames(
 											item.current
-												? 'text-indigo-500 group-hover:text-indigo-500'
+												? 'text-blue-500 group-hover:text-blue-500'
 												: 'text-gray-400 group-hover:text-gray-500',
 											'flex-shrink-0 -ml-1 mr-3 h-6 w-6'
 										)}
@@ -142,81 +169,8 @@ const Mail = ({ currentAccount, contractOwner }) => {
 					</nav>
 				</aside>
 
-				{!showInbox && <div className="space-y-6 sm:px-6 lg:px-0 lg:col-span-9">
-					<form>
-						<div className="shadow sm:rounded-md sm:overflow-hidden">
-							<div className="bg-white py-6 px-4 space-y-6 sm:p-6">
-								<div>
-									<h3 className="text-lg leading-6 font-medium text-gray-900">Send Message</h3>
-									<p className="mt-1 text-sm text-gray-500">
-										Send some message
-									</p>
-								</div>
-
-								<div className="grid grid-cols-3 gap-6">
-									<div className="col-span-6 sm:col-span-4">
-										<label htmlFor="email-address" className="block text-sm font-medium text-gray-700">
-											Address
-										</label>
-										<input
-											type="text"
-											name="address"
-											id="address"
-											placeholder="Recipient Wallet Address"
-											onChange={e => setAddress(e.target.value)}
-											className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-										/>
-									</div>
-
-									<div className="col-span-6 sm:col-span-4">
-										<label htmlFor="email-address" className="block text-sm font-medium text-gray-700">
-											Incentive
-										</label>
-										<input
-											type="number"
-											name="incentive"
-											id="incentive"
-											placeholder="Incentive amount"
-											onChange={e => setIncentive(e.target.value)}
-											className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-										/>
-									</div>
-
-									<div className="col-span-3">
-										<label htmlFor="about" className="block text-sm font-medium text-gray-700">
-											Message
-										</label>
-										<div className="mt-1">
-											<textarea
-												id="message"
-												name="message"
-												rows={3}
-												className="p-4 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
-												placeholder="Sell me your NFT"
-												onChange={e => setMessage(e.target.value)}
-												defaultValue={''}
-											/>
-										</div>
-									</div>
-								</div>
-							</div>
-							<div className="px-4 py-3 bg-gray-50 text-right sm:px-6">
-								<button
-									type="submit"
-									className="bg-indigo-600 border border-transparent rounded-md shadow-sm py-2 px-4 inline-flex justify-center text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-									onClick={sendEmail}
-								>
-									Send
-								</button>
-							</div>
-						</div>
-					</form>
-				</div>}
-				{showInbox && <div className="space-y-6 sm:px-6 lg:px-0 lg:col-span-9">
-					<div className="shadow sm:rounded-md sm:overflow-hidden">
-						<p>You have no mail</p>
-					</div>
-				</div>}
+				{showCompose && <Compose setAddress={setAddress} setIncentive={setIncentive} setMessage={setMessage} sendEmail={sendEmail} />}
+				{showInbox && <Inbox isLoading={isLoading} mailMetadata={mailMetadata} onChainMail={onChainMail} onChainMailAddress={onChainMailAddress} />}
 			</div>
 		</div>
 	)

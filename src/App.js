@@ -4,7 +4,6 @@ import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import Header from "./components/Header.jsx";
 import ConnectWithMetaMaskButton from "./components/ConnectWithMetaMaskButton.jsx";
 
-import Inbox from "./pages/Inbox";
 import Mail from './pages/Mail';
 
 import {
@@ -20,15 +19,6 @@ function App() {
   const [currentAccount, setCurrentAccount] = useState("");
   const [provider, setProvider] = useState(null);
   const [contract, setContract] = useState(null);
-
-  /*const address = addressJson.address;
-  const contractABI = abiJson.abi;
-
-  useEffect(() => {
-    checkIfWalletIsConnected(setCurrentAccount);
-    updateProviderAndContract(address, contractABI, setProvider, setContract);
-  }, []);
-  */
 
   useEffect(() => {
     getContractOwner(setContractOwner);
@@ -69,9 +59,6 @@ function App() {
         <Switch>
           <Route exact path="/">
             <Mail {...{ contractOwner, currentAccount, provider, contract }} />
-          </Route>
-          <Route exact path="/inbox">
-            <Inbox {...{ contractOwner, currentAccount, provider, contract }} />
           </Route>
         </Switch>
       </div>
