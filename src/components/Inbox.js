@@ -24,6 +24,20 @@ export default function Inbox({ isLoading, mailMetadata, onChainMail, onChainMai
     await window.ethereum.request({ method: 'eth_requestAccounts' });
   }
 
+  function timeConverter(UNIX_timestamp) {
+    let a = new Date(UNIX_timestamp * 1000);
+    let months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    let year = a.getFullYear();
+    let month = months[a.getMonth()];
+    let date = a.getDate();
+    let hour = a.getHours(); hour = ("0" + hour).slice(-2);
+    let min = a.getMinutes();  min = ("0" + min).slice(-2);
+    let sec = a.getSeconds();  sec = ("0" + sec).slice(-2);
+    let time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;
+
+    return time;
+  }
+
   // call the smart contract to accept incentive / mark read
   async function markRead() {
     console.log("Starting message read flow...")
@@ -84,6 +98,9 @@ export default function Inbox({ isLoading, mailMetadata, onChainMail, onChainMai
                     <div className="px-4 py-4 sm:px-6">
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-medium text-blue-600 truncate">{data.read ? 'Read' : 'New Message'}</p>
+                        <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
+                          <p className="text-sm font-medium truncate">{timeConverter(data.receivedTimestamp)}</p>
+                        </div>
                       </div>
                       <div className="mt-2 sm:flex sm:justify-between">
                         <div className="sm:flex">
@@ -95,7 +112,7 @@ export default function Inbox({ isLoading, mailMetadata, onChainMail, onChainMai
                         <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
                           <GlobeIcon className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" aria-hidden="true" />
                           <p>
-                            Incentive: {ethers.utils.formatEther(data.incentiveInWei)} ETH
+                            Incentive: {data.read ? 'Claimed' : ethers.utils.formatEther(data.incentiveInWei) + ' ETH'}
                           </p>
                         </div>
                       </div>
