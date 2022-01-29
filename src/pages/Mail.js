@@ -12,7 +12,7 @@ function classNames(...classes) {
 }
 
 // Update with the contract address logged out to the CLI when it was deployed 
-const onChainMailAddress = "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+const onChainMailAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3"
 
 const Mail = ({ currentAccount, contractOwner }) => {
 	const [navigation, setNavigation] = useState({
@@ -38,7 +38,7 @@ const Mail = ({ currentAccount, contractOwner }) => {
 		await window.ethereum.request({ method: 'eth_requestAccounts' });
 	}
 
-	// call the smart contract
+	// call the smart contract to send an email
 	async function sendEmail(event) {
 		event.preventDefault()
 		console.log("sendEmail()")
@@ -83,6 +83,7 @@ const Mail = ({ currentAccount, contractOwner }) => {
 
 			try {
 				const mailIds = await contract.getReceivedMail(currentAccount)
+				console.log('Mail IDs: ', mailIds)
 
 				const mailDetails = await Promise.all(mailIds.map(id => {
 					return contract.mailDetails(id)
@@ -94,7 +95,7 @@ const Mail = ({ currentAccount, contractOwner }) => {
 
 				const mailMetadata = mailDetails.map((detail, idx) => {
 					const [read, encrypted, incentiveInWei, sender] = detail
-
+					
 					return {
 						id: mailIds[idx],
 						read,

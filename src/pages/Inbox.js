@@ -14,6 +14,7 @@ export default function Inbox({ isLoading, mailMetadata, onChainMail, onChainMai
 
   const handleMessageOpen = async (metadata) => {
     setOpen(true)
+    console.log('Metadata passed in: ', metadata)
 
     let messageData = {};
 
