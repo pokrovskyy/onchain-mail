@@ -1,16 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import { Toaster } from 'react-hot-toast'
 
-import Header from "./components/Header.jsx";
-import ConnectWithMetaMaskButton from "./components/ConnectWithMetaMaskButton.jsx";
-
-import Mail from './pages/Mail';
-
-import {
-  checkIfWalletIsConnected,
-  getSignedContract,
-  updateProviderAndContract,
-} from "./utils/common.js";
+import Header from "./components/Header";
+import Mail from './components/Mail';
+import ConnectWithMetaMaskButton from "./components/ConnectWithMetaMaskButton";
 
 import './App.css';
 
@@ -47,22 +41,25 @@ function App() {
   const isMetamaskConnected = !!currentAccount;
 
   return (
-    <Router>
-      <div id="app-container">
-        <Header isOwner={isOwner} />
-        {!isMetamaskConnected && (
-          <ConnectWithMetaMaskButton
-            setCurrentAccount={setCurrentAccount}
-            isMetamaskConnected={isMetamaskConnected}
-          />
-        )}
+    <div className="h-full w-full">
+      <Router>
         <Switch>
-          <Route exact path="/">
+          <Route exact path="/mail">
             <Mail {...{ contractOwner, currentAccount, provider, contract }} />
           </Route>
+          <Route path="/">
+            <Header isOwner={isOwner} />
+            {!isMetamaskConnected && (
+              <ConnectWithMetaMaskButton
+                setCurrentAccount={setCurrentAccount}
+                isMetamaskConnected={isMetamaskConnected}
+              />
+            )}
+          </Route>
         </Switch>
-      </div>
-    </Router>
+      </Router>
+      <Toaster />
+    </div>
   );
 }
 

@@ -1,4 +1,5 @@
 import { ethers } from 'ethers';
+import toast from 'react-hot-toast'
 
 export const getSignedContract = (address, contractABI) => {
     const { ethereum } = window;
@@ -43,16 +44,17 @@ export const checkIfWalletIsConnected = async (setCurrentAccount) => {
             setCurrentAccount(account.toLowerCase())
         }
     } catch (error) {
-        console.log(error);
+        console.log('CheckIfWalletIsConnected Err:', error);
+        toast.error('Error checking if wallet is connected. Please try again.')
     }
 }
 
-export const connectWallet = async (setCurrentAccount) => {
+export const connectWallet = async (setCurrentAccount, history) => {
     try {
         const { ethereum } = window;
 
         if (!ethereum) {
-            alert("Get MetaMask!");
+            toast("You don't have Metamask installed!")
             return;
         }
 
@@ -60,8 +62,10 @@ export const connectWallet = async (setCurrentAccount) => {
 
         setCurrentAccount(accounts[0].toLowerCase());
 
+        history.push("/mail")
     } catch (error) {
-        console.log(error)
+        console.log("Connect Wallet Err:", error)
+        toast.error('Error connecting wallet. Please try again.')
     }
 }
 

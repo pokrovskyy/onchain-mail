@@ -1,8 +1,11 @@
-import React from "react";
+import React from "react"
+import { useHistory } from "react-router-dom"
 
-import { connectWallet } from "../utils/common.js";
+import { connectWallet } from "../utils/common.js"
 
 export default function ConnectWithMetaMaskButton({ setCurrentAccount }) {
+  const history = useHistory()
+
   return (
     <div style={{ maxWidth: "1280px", margin: "auto" }}>
       <div
@@ -17,7 +20,7 @@ export default function ConnectWithMetaMaskButton({ setCurrentAccount }) {
       >
         <button
           className=""
-          onClick={() => connectWallet(setCurrentAccount)}
+          onClick={() => connectWallet(setCurrentAccount, history)}
           style={{
             background: "black",
             color: "white",
@@ -38,5 +41,5 @@ export default function ConnectWithMetaMaskButton({ setCurrentAccount }) {
         </button>
       </div>
     </div>
-  );
+  )
 }

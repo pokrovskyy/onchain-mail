@@ -1,13 +1,13 @@
 export default function Compose({ setAddress, setIncentive, setMessage, sendEmail }) {
   return (
-    <div className="space-y-6 sm:px-6 lg:px-0 lg:col-span-9">
+    <div className="h-full w-full space-y-6 p-3 sm:px-6 lg:col-span-9">
       <form>
         <div className="shadow sm:rounded-md sm:overflow-hidden">
           <div className="bg-white py-6 px-4 space-y-6 sm:p-6">
             <div>
               <h3 className="text-lg leading-6 font-medium text-gray-900">Send Message</h3>
               <p className="mt-1 text-sm text-gray-500">
-                Send some message
+                Send a message to any address
               </p>
             </div>
 
@@ -50,7 +50,7 @@ export default function Compose({ setAddress, setIncentive, setMessage, sendEmai
                     name="message"
                     rows={3}
                     className="p-4 shadow-sm focus:ring-blue-500 focus:border-blue-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
-                    placeholder="Sell me your NFT"
+                    placeholder="Your message"
                     onChange={e => setMessage(e.target.value)}
                     defaultValue={''}
                   />
