@@ -1,7 +1,6 @@
 import React from "react";
-import { Link } from "react-router-dom";
 
-export default function Header({ isOwner }) {
+export default function Header() {
   return (
     <header className="text-gray-600 body-font">
       <div className="relative pt-6 pb-4">

@@ -1,5 +1,5 @@
 import { Fragment, useState } from 'react'
-import { useHistory } from 'react-router-dom'
+import { Link, useHistory } from 'react-router-dom'
 import { Dialog, Transition } from '@headlessui/react'
 import toast from 'react-hot-toast'
 import {
@@ -22,7 +22,7 @@ function classNames(...classes) {
 // Update with the contract address logged out to the CLI when it was deployed 
 const onChainMailAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3"
 
-const Mail = ({ currentAccount, contractOwner }) => {
+const Mail = ({ currentAccount }) => {
 	const history = useHistory()
 
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -207,10 +207,12 @@ const Mail = ({ currentAccount, contractOwner }) => {
 					{/* Desktop nav area */}
 					<div className="hidden md:min-w-0 md:flex-1 md:flex md:items-center md:justify-between">
 						<div className="min-w-0 flex-1">
-							<div className="flex max-w-2xl relative font-bold text-2xl text-gray-400 focus-within:text-gray-500 m-2">
-								<span className="block xl:inline">OnChain </span>
-								<span className="block text-blue-600 xl:inline">Mail</span>
-							</div>
+							<Link to="/">
+								<div className="flex max-w-2xl relative font-bold text-2xl text-gray-400 focus-within:text-gray-500 mx-5">
+									<span className="block xl:inline mx-1">OnChain</span>
+									<span className="block text-blue-600 xl:inline mx-1">Mail</span>
+								</div>
+							</Link>
 						</div>
 						<div className="ml-10 pr-4 flex-shrink-0 flex items-center space-x-10">
 							<div className="flex max-w-2xl relative text-xl text-gray-400 focus-within:text-gray-500 m-2">

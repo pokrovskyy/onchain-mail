@@ -64,6 +64,7 @@ export default function Inbox({ isLoading, mailMetadata, onChainMail, onChainMai
       catch (error) {
         console.log('Error marking read:', error)
         console.log('Error with token ID:', tokenId) // to comment out later
+        toast.error('Unable to mark message as read. Please try again.')
       }
     }
   }
