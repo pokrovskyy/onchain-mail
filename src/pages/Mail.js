@@ -12,7 +12,7 @@ function classNames(...classes) {
 }
 
 // Update with the contract address logged out to the CLI when it was deployed 
-const onChainMailAddress = "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+const onChainMailAddress = "0x5fbdb2315678afecb367f032d93f642f64180aa3"
 
 const Mail = ({ currentAccount, contractOwner }) => {
 	const [navigation, setNavigation] = useState({
@@ -93,15 +93,17 @@ const Mail = ({ currentAccount, contractOwner }) => {
 				}))
 
 				const mailMetadata = mailDetails.map((detail, idx) => {
-					const [read, encrypted, incentiveInWei, sender] = detail
+					const [encrypted, incentiveInWei, sender, receivedTimestamp, readTimestamp] = detail
 
 					return {
 						id: mailIds[idx],
-						read,
+						read: readTimestamp > 0,
 						encrypted,
 						incentiveInWei,
 						sender,
 						tokenURI: tokenURIs[idx],
+						readTimestamp: (readTimestamp > 0 ? new Date(readTimestamp.toNumber()) : null),
+						receivedTimestamp: new Date(receivedTimestamp.toNumber())
 					}
 				})
 
