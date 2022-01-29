@@ -16,10 +16,11 @@ contract OnChainMail is ERC721URIStorage {
     Counters.Counter private _tokenIds;
 
     struct MailDetail {
-        bool read;
         bool encrypted;
         uint256 incentiveInWei;
         address sender;
+        uint256 receivedTimestamp;
+        uint256 readTimestamp;
     }
 
     mapping(address => uint256[]) public receivedMailIds; // inbox
@@ -43,10 +44,11 @@ contract OnChainMail is ERC721URIStorage {
         receivedMailIds[recipient].push(newMailId);
         sentMailIds[msg.sender].push(newMailId);
         mailDetails[newMailId] = MailDetail(
-            false,
             encrypted,
             msg.value,
-            msg.sender
+            msg.sender,
+            block.timestamp,
+            0
         );
 
         return newMailId;
@@ -59,7 +61,7 @@ contract OnChainMail is ERC721URIStorage {
         checkIsRecipient(tokenId)
     {
         MailDetail storage mailDetail = mailDetails[tokenId];
-        mailDetail.read = true;
+        mailDetail.readTimestamp = block.timestamp;
         (bool sent, ) = msg.sender.call{value: mailDetail.incentiveInWei}("");
         require(sent, "Could not process the payout");
     }
@@ -71,7 +73,7 @@ contract OnChainMail is ERC721URIStorage {
     {
         MailDetail storage mailDetail = mailDetails[tokenId];
         require(!mailDetail.encrypted, "Cannot reroute encrypted mail");
-        require(!mailDetail.read, "Cannot reroute read mail");
+        require(mailDetail.readTimestamp == 0, "Cannot reroute read mail");
         require(
             ownerOf(tokenId) != newRecipient,
             "New recipient should differ from the current"
@@ -95,7 +97,7 @@ contract OnChainMail is ERC721URIStorage {
             _deleteFromSentEmails(mailDetail.sender, tokenId);
         else {
             // receiver purges from their inbox
-            if (!mailDetail.read) {
+            if (mailDetail.readTimestamp == 0) {
                 // the incentive deposit is refunded to the sender for the unread message
                 (bool sent, ) = mailDetail.sender.call{
                     value: mailDetail.incentiveInWei
@@ -114,7 +116,7 @@ contract OnChainMail is ERC721URIStorage {
     {
         // the incentive deposit is refunded to the sender for the unread message
         MailDetail storage mailDetail = mailDetails[tokenId];
-        require(!mailDetail.read, "Cannot retract read email");
+        require(mailDetail.readTimestamp == 0, "Cannot retract read email");
         (bool sent, ) = mailDetail.sender.call{
             value: mailDetail.incentiveInWei
         }("");
