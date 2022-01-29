@@ -71,6 +71,19 @@ export default function Inbox({ isLoading, mailMetadata, onChainMail, onChainMai
 		}
 	}
 
+  function timeConverter(UNIX_timestamp){
+    var a = new Date(UNIX_timestamp * 1000);
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var year = a.getFullYear();
+    var month = months[a.getMonth()];
+    var date = a.getDate();
+    var hour = a.getHours(); hour = ("0" + hour).slice(-2);
+    var min = a.getMinutes();  min = ("0" + min).slice(-2);
+    var sec = a.getSeconds();  sec = ("0" + sec).slice(-2);
+    var time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;
+    return time;
+  }
+
   return (
     <div className="space-y-6 sm:px-6 lg:px-0 lg:col-span-9">
       <div className="bg-white shadow overflow-hidden sm:rounded-md">
@@ -84,6 +97,9 @@ export default function Inbox({ isLoading, mailMetadata, onChainMail, onChainMai
                   <div className="px-4 py-4 sm:px-6">
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-medium text-blue-600 truncate">{data.read ? 'Read' : 'New Message'}</p>
+                      <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
+                        <p className="text-sm font-medium truncate">{timeConverter(data.receivedTimestamp)}</p>
+                      </div>
                     </div>
                     <div className="mt-2 sm:flex sm:justify-between">
                       <div className="sm:flex">
@@ -151,12 +167,12 @@ export default function Inbox({ isLoading, mailMetadata, onChainMail, onChainMai
                       </Dialog.Title>
                       <div className="mt-2">
                         <p className="text-md text-gray-800">
-                          From: {currentMessage?.sender || 'Unknown'}
+                          From: {currentMessage?.sender || 'Loading...'}
                         </p>
                         <br />
                         <p className="text-md text-gray-800">
-                          Body: <br />
-                          {currentMessage?.content || 'No body'}
+                          Message: <br />
+                          {currentMessage?.content || 'Loading...'}
                         </p>
                       </div>
                     </div>

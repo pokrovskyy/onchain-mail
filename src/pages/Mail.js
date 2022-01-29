@@ -12,7 +12,7 @@ function classNames(...classes) {
 }
 
 // Update with the contract address logged out to the CLI when it was deployed 
-const onChainMailAddress = "0x5fbdb2315678afecb367f032d93f642f64180aa3"
+const onChainMailAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3"
 
 const Mail = ({ currentAccount, contractOwner }) => {
 	const [navigation, setNavigation] = useState({
