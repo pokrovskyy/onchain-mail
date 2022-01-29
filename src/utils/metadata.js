@@ -22,7 +22,7 @@ export async function storeMetadata(message, title, pubKey) {
     external_url: "https://onchainmail.io",
     timestamp: Date.now(),
     description: `This message can be viewed by the recipient at https://onchainmail.io`,
-    title: title
+    title: title,
   };
 
   if (pubKey)

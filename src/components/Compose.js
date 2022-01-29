@@ -1,4 +1,6 @@
-export default function Compose({ setAddress, setIncentive, setMessage, sendEmail }) {
+import Spinner from "./Spinner"
+
+export default function Compose({ setAddress, setIncentive, setMessage, setTitle, sendEmail, isSending }) {
   return (
     <div className="h-full w-full space-y-6 p-3 sm:px-6 lg:col-span-9">
       <form>
@@ -22,6 +24,20 @@ export default function Compose({ setAddress, setIncentive, setMessage, sendEmai
                   id="address"
                   placeholder="Recipient Wallet Address"
                   onChange={e => setAddress(e.target.value)}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                />
+              </div>
+
+              <div className="col-span-6 sm:col-span-4">
+                <label htmlFor="email-address" className="block text-sm font-medium text-gray-700">
+                  Subject 
+                </label>
+                <input
+                  type="text"
+                  name="title"
+                  id="title"
+                  placeholder="Message Title"
+                  onChange={e => setTitle(e.target.value)}
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 />
               </div>
@@ -58,14 +74,17 @@ export default function Compose({ setAddress, setIncentive, setMessage, sendEmai
               </div>
             </div>
           </div>
-          <div className="px-4 py-3 bg-gray-50 text-right sm:px-6">
-            <button
-              type="submit"
-              className="bg-blue-600 border border-transparent rounded-md shadow-sm py-2 px-4 inline-flex justify-center text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              onClick={sendEmail}
-            >
-              Send
-            </button>
+          <div className="flex justify-end px-4 py-3 bg-gray-50 text-right sm:px-6">
+            <div className="flex">
+              {isSending && <Spinner />}
+              <button
+                type="submit"
+                className="bg-blue-600 border border-transparent rounded-md mx-2 shadow-sm py-2 px-4 inline-flex justify-center text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                onClick={sendEmail}
+              >
+                Send
+              </button>
+            </div>
           </div>
         </div>
       </form>

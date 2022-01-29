@@ -33,10 +33,12 @@ const Mail = ({ currentAccount, contractOwner }) => {
 	const [showCompose, setShowCompose] = useState(true);
 	const [showInbox, setShowInbox] = useState(false);
 	const [address, setAddress] = useState('');
+	const [title, setTitle] = useState('');
 	const [incentive, setIncentive] = useState(0);
 	const [message, setMessage] = useState('');
 	const [mailMetadata, setMailMetadata] = useState([])
 	const [isLoading, setIsLoading] = useState(false)
+	const [isSending, setIsSending] = useState(false)
 
 	const isMetamaskConnected = !!currentAccount;
 
@@ -75,7 +77,7 @@ const Mail = ({ currentAccount, contractOwner }) => {
 		let tokenURI = ''
 
 		try {
-			tokenURI = await storeMetadata(message)
+			tokenURI = await storeMetadata(message, title)
 		}
 		catch (error) {
 			console.log('Error storing metadata:', error)
@@ -84,7 +86,10 @@ const Mail = ({ currentAccount, contractOwner }) => {
 
 		if (typeof window.ethereum !== 'undefined') {
 			console.log('Begin send email flow...')
+			setIsSending(true)
+
 			await requestAccount()
+
 			const provider = new ethers.providers.Web3Provider(window.ethereum);
 			const signer = provider.getSigner()
 			const contract = new ethers.Contract(onChainMailAddress, onChainMail.abi, signer)
@@ -93,10 +98,14 @@ const Mail = ({ currentAccount, contractOwner }) => {
 				const transaction = await contract.sendEmail(address, false, tokenURI, { value: ethers.utils.parseEther(incentive) })
 				await transaction.wait()
 				console.log('Sent mail:', transaction)
+				toast.success('Message sent!')
 			}
 			catch (error) {
 				console.log('Send Mail Err:', error)
 				toast.error('Error sending message. Please try again.')
+			}
+			finally {
+				setIsSending(false)
 			}
 		}
 	}
@@ -138,6 +147,8 @@ const Mail = ({ currentAccount, contractOwner }) => {
 				})
 
 				console.log('Mail metadata', mailMetadata)
+
+				mailMetadata.reverse() // Sort newest to oldest
 
 				setMailMetadata(mailMetadata)
 			}
@@ -280,7 +291,7 @@ const Mail = ({ currentAccount, contractOwner }) => {
 
 					{/* Main area */}
 					<main className="min-w-0 flex-1 border-t border-gray-200 lg:flex">
-						{showCompose && <Compose setAddress={setAddress} setIncentive={setIncentive} setMessage={setMessage} sendEmail={sendEmail} />}
+						{showCompose && <Compose setAddress={setAddress} setIncentive={setIncentive} setMessage={setMessage} setTitle={setTitle} sendEmail={sendEmail} isSending={isSending} />}
 						{showInbox && <Inbox isLoading={isLoading} mailMetadata={mailMetadata} onChainMail={onChainMail} onChainMailAddress={onChainMailAddress} />}
 					</main>
 				</div>

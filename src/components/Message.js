@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ethers } from 'ethers'
+import toast from 'react-hot-toast'
 
 import Spinner from './Spinner'
 import { getMessageData } from '../utils/metadata'
@@ -21,6 +22,7 @@ const Message = ({ mailMetadata, markRead }) => {
 		}
 		catch (e) {
 			console.log('Error getting message:', e)
+			toast.error('Error fetching message. Please try again.')
 		}
 		finally {
 			setIsMessageLoading(false)
@@ -49,7 +51,7 @@ const Message = ({ mailMetadata, markRead }) => {
 		<div className="bg-white shadow overflow-hidden sm:rounded-lg">
 			<div className="flex justify-between px-4 py-5 sm:px-6">
 				<div>
-					<h3 className="text-lg leading-6 font-medium text-gray-900">Subject</h3>
+					<h3 className="text-lg leading-6 font-medium text-gray-900">Subject: {messageData?.title || (mailMetadata?.read ? '<No Subject>' : '<Pending read>')}</h3>
 				</div>
 			</div>
 			<div className="border-t border-gray-200 px-4 py-5 sm:p-0">

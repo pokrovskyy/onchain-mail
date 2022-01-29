@@ -1,12 +1,14 @@
-import { Fragment, useState } from 'react'
+import { Fragment, useRef, useState } from 'react'
 import { Dialog, Transition } from '@headlessui/react'
 import { XIcon } from '@heroicons/react/outline'
 import { ethers } from 'ethers'
 import { GlobeIcon, MailIcon } from '@heroicons/react/solid'
 
 import Message from './Message'
+import toast from 'react-hot-toast'
 
 export default function Inbox({ isLoading, mailMetadata, onChainMail, onChainMailAddress }) {
+  const buttonRef = useRef(null)
   const [currentMessageIdx, setCurrentMessageIdx] = useState(0)
   const [open, setOpen] = useState(false)
   const [currentId, setCurrentId] = useState(null)
@@ -42,18 +44,11 @@ export default function Inbox({ isLoading, mailMetadata, onChainMail, onChainMai
   async function markRead() {
     console.log("Starting message read flow...")
 
-    let tokenId = ''
-
-    try {
-      tokenId = currentId
-    }
-    catch (error) {
-      console.log('Error storing metadata:', error)
-    }
+    let tokenId = currentId
 
     if (typeof window.ethereum !== 'undefined') {
       console.log('Begin accept incentive flow...')
-      console.log('Current token id: ', tokenId)
+
       await requestAccount()
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner()
@@ -63,6 +58,8 @@ export default function Inbox({ isLoading, mailMetadata, onChainMail, onChainMai
         const readTransaction = await contract.markRead(tokenId)
         await readTransaction.wait()
         console.log('Marked read:', readTransaction)
+
+        mailMetadata[currentMessageIdx].read = true
       }
       catch (error) {
         console.log('Error marking read:', error)
@@ -94,10 +91,10 @@ export default function Inbox({ isLoading, mailMetadata, onChainMail, onChainMai
             {mailMetadata.map((data, idx) => {
               return (
                 <li key={data.id} className="" onClick={() => { handleMessageOpen(data, idx) }}>
-                  <div className="block hover:bg-gray-50">
+                  <div className={`block hover:bg-gray-200 ${data?.read ? '' : 'bg-white text-black-800' }`}>
                     <div className="px-4 py-4 sm:px-6">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium text-blue-600 truncate">{data.read ? 'Read' : 'New Message'}</p>
+                        <p className={`text-sm ${data.read ? 'text-gray-600 font-medium' : 'text-blue-600 font-bold' } truncate`}>{data.read ? 'Read' : 'New Message'}</p>
                         <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
                           <p className="text-sm font-medium truncate">{timeConverter(data.receivedTimestamp)}</p>
                         </div>
@@ -125,7 +122,7 @@ export default function Inbox({ isLoading, mailMetadata, onChainMail, onChainMai
         </div>
       </aside>
       <Transition.Root className="block md:hidden" show={open} as={Fragment}>
-        <Dialog as="div" className="fixed z-10 inset-0 overflow-y-auto" onClose={setOpen}>
+        <Dialog as="div" className="fixed z-10 inset-0 overflow-y-auto" onClose={setOpen} initialFocus={buttonRef}>
           <div className="flex items-end justify-center min-h-screen text-center sm:block sm:p-0">
             <Transition.Child
               as={Fragment}
@@ -185,6 +182,7 @@ export default function Inbox({ isLoading, mailMetadata, onChainMail, onChainMai
                     type="button"
                     className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm"
                     onClick={() => { markRead(); setOpen(false) }}
+                    ref={buttonRef}
                   >
                     Accept Incentive
                   </button>
