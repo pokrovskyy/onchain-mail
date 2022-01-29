@@ -1,4 +1,5 @@
 import { Fragment, useState } from 'react'
+import { useHistory } from 'react-router-dom'
 import { Dialog, Transition } from '@headlessui/react'
 import toast from 'react-hot-toast'
 import {
@@ -22,6 +23,8 @@ function classNames(...classes) {
 const onChainMailAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3"
 
 const Mail = ({ currentAccount, contractOwner }) => {
+	const history = useHistory()
+
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 	const [sidebarNavigation, setSidebarNavigation] = useState({
 		compose: { key: 'compose', name: 'Compose', href: '#', icon: PencilAltIcon, current: true },
@@ -38,6 +41,8 @@ const Mail = ({ currentAccount, contractOwner }) => {
 	const isMetamaskConnected = !!currentAccount;
 
 	if (!isMetamaskConnected) {
+		toast("You're not connected to Metamask!")
+		history.push("/")
 		return null;
 	}
 
