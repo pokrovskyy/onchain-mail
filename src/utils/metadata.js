@@ -12,7 +12,7 @@ const PINATA_API_SECRET = "c0743cd0b9b140ab4bfd1658b9a01aa0d930a80c200771d9947aa
 /// Optional pubKey can be provided for encryption
 /// (must be coming from recipient's Metamask)
 ///
-export async function storeMetadata(message, pubKey) {
+export async function storeMetadata(message, title, pubKey) {
   let uid = Math.round(Math.random() * 10000000);
 
   let metadata = {
@@ -20,7 +20,9 @@ export async function storeMetadata(message, pubKey) {
     image:
       "https://icons-for-free.com/iconfiles/png/512/e+mail+email+letter+mail+message+send+icon-1320191653632976617.png",
     external_url: "https://onchainmail.io",
+    timestamp: Date.now(),
     description: `This message can be viewed by the recipient at https://onchainmail.io`,
+    title: title
   };
 
   if (pubKey)
@@ -53,6 +55,8 @@ export async function getMessageData(metadataURI) {
   if (metadata.plain_content)
     return {
       image: metadata.image,
+      title: metadata.title,
+      timestamp: metadata.timestamp,
       content: await (
         await fetch("https://ipfs.io/ipfs/" + metadata.plain_content)
       ).text(),
@@ -60,6 +64,8 @@ export async function getMessageData(metadataURI) {
   else if (metadata.encrypted_content)
     return {
       image: metadata.image,
+      title: metadata.title,
+      timestamp: metadata.timestamp,
       content: await _decryptMessage(
         await (
           await fetch("https://ipfs.io/ipfs/" + metadata.encrypted_content)
