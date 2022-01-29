@@ -10,6 +10,7 @@ export default function Inbox({ isLoading, mailMetadata, onChainMail, onChainMai
   const [messageOpen, setMessageOpen] = useState(false)
   const [currentMessage, setCurrentMessage] = useState(null)
   const [open, setOpen] = useState(false)
+  const [currentId, setCurrentId] = useState(null)
 
   const handleMessageOpen = async (metadata) => {
     setOpen(true)
@@ -38,13 +39,13 @@ export default function Inbox({ isLoading, mailMetadata, onChainMail, onChainMai
 
   // call the smart contract to accept incentive / mark read
 	async function markRead(event) {
-		event.preventDefault()
+		//event.preventDefault()
 		console.log("markRead()")
 		
     let tokenId = ''
 
     try {
-			tokenId = 0 // REPLACE to read mailId of the current token; await
+			tokenId = currentId
 		}
 		catch (error) {
 			console.log('Error storing metadata:', error)
@@ -52,6 +53,7 @@ export default function Inbox({ isLoading, mailMetadata, onChainMail, onChainMai
 
 		if (typeof window.ethereum !== 'undefined') {
 			console.log('Begin accept incentive flow...')
+      console.log('Current token id: ', tokenId)
 			await requestAccount()
 			const provider = new ethers.providers.Web3Provider(window.ethereum);
 			const signer = provider.getSigner()
@@ -77,7 +79,7 @@ export default function Inbox({ isLoading, mailMetadata, onChainMail, onChainMai
           {!isLoading && mailMetadata.length === 0 && <p className="m-5">You have no mail</p>}
           {mailMetadata.map(data => {
             return (
-              <li key={data.id} onClick={() => handleMessageOpen(data)}>
+              <li key={data.id} onClick={() => {handleMessageOpen(data); setCurrentId(data.id)}}>
                 <div className="block hover:bg-gray-50">
                   <div className="px-4 py-4 sm:px-6">
                     <div className="flex items-center justify-between">
@@ -163,7 +165,7 @@ export default function Inbox({ isLoading, mailMetadata, onChainMail, onChainMai
                     <button
                       type="button"
                       className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm"
-                      onClick={() => {markRead() ;setOpen(false)}}
+                      onClick={() => {markRead(); setOpen(false)}}
                     >
                       Accept Incentive
                     </button>
