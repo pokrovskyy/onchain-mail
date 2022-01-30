@@ -4,6 +4,7 @@ import { XIcon } from '@heroicons/react/outline'
 import { ethers } from 'ethers'
 import { GlobeIcon, MailIcon } from '@heroicons/react/solid'
 
+import { getMessageData } from '../utils/metadata'
 import Message from './Message'
 import toast from 'react-hot-toast'
 
@@ -12,6 +13,33 @@ export default function Inbox({ isLoading, mailMetadata, onChainMail, onChainMai
   const [currentMessageIdx, setCurrentMessageIdx] = useState(0)
   const [open, setOpen] = useState(false)
   const [currentId, setCurrentId] = useState(null)
+	const [messageData, setMessageData] = useState({})
+	const [isMessageLoading, setIsMessageLoading] = useState(false)
+
+	const fetchMessageData = async (tokenURI) => {
+		console.log('Fetching message...')
+		let newMessageData = {...messageData};
+
+		setIsMessageLoading(true)
+
+		try {
+			let message = await getMessageData(tokenURI)
+
+			newMessageData[tokenURI] = message
+
+			setMessageData(newMessageData)
+
+			console.log('Message:', message)
+		}
+		catch (e) {
+			console.log('Error getting message:', e)
+      // TODO: Look into unexpected token when fetching message
+			// toast.error('Error fetching message. Please try again.')
+		}
+		finally {
+			setIsMessageLoading(false)
+		}
+	}
 
   const handleMessageOpen = async (metadata, idx) => {
     setOpen(true)
@@ -19,6 +47,8 @@ export default function Inbox({ isLoading, mailMetadata, onChainMail, onChainMai
     setCurrentId(metadata.id) 
 
     setCurrentMessageIdx(idx)
+
+    fetchMessageData(metadata.tokenURI)
   }
 
   // request access to the user's MetaMask account
@@ -80,7 +110,12 @@ export default function Inbox({ isLoading, mailMetadata, onChainMail, onChainMai
           Inbox
         </h1>
         {!isLoading && mailMetadata.length === 0 && <p className="m-5">You have no mail</p>}
-        {mailMetadata.length !== 0 && <Message mailMetadata={mailMetadata[currentMessageIdx]} markRead={markRead} />}
+        {mailMetadata.length !== 0 && <Message
+          mailMetadata={mailMetadata[currentMessageIdx]} markRead={markRead}
+          messageData={messageData}
+          isMessageLoading={isMessageLoading}
+          fetchMessageData={fetchMessageData}
+        />}
       </section>
 
       {/* Secondary column (hidden on smaller screens) */}

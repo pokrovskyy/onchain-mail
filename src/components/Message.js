@@ -3,36 +3,15 @@ import { ethers } from 'ethers'
 import toast from 'react-hot-toast'
 
 import Spinner from './Spinner'
-import { getMessageData } from '../utils/metadata'
 
-const Message = ({ mailMetadata: { tokenURI, read = false, sender, title = '', incentiveInWei }, markRead }) => {
-	const [isMessageLoading, setIsMessageLoading] = useState(false)
+const Message = ({
+	mailMetadata: { tokenURI, read = false, sender, title = '', incentiveInWei },
+	markRead,
+	fetchMessageData,
+	messageData,
+	isMessageLoading,
+}) => {
 	const [accepted, setAccepted] = useState({}) // map of <tokenURI, accepted> accepted messages
-	const [messageData, setMessageData] = useState({})
-
-	const fetchMessageData = async () => {
-		console.log('Fetching message...')
-		let newMessageData = {...messageData};
-
-		setIsMessageLoading(true)
-
-		try {
-			let message = await getMessageData(tokenURI)
-
-			newMessageData[tokenURI] = message
-
-			setMessageData(newMessageData)
-
-			console.log('Message:', message)
-		}
-		catch (e) {
-			console.log('Error getting message:', e)
-			toast.error('Error fetching message. Please try again.')
-		}
-		finally {
-			setIsMessageLoading(false)
-		}
-	}
 
 	const handleAcceptIncentive = (tokenURI) => {
 		if (tokenURI) {
@@ -81,7 +60,7 @@ const Message = ({ mailMetadata: { tokenURI, read = false, sender, title = '', i
 						{!isMessageLoading && <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
 							{messageData[tokenURI]?.content || 'No message present'}
 						</dd>}
-						{isMessageLoading && <p>This may take a while...</p>}
+						{isMessageLoading && <p className='text-sm text-gray-900'>This may take a while...</p>}
 						{isMessageLoading && <Spinner />}
 					</div>}
 				</dl>
