@@ -49,7 +49,7 @@ export async function storeMetadata(message, title, pubKey) {
 ///
 export async function getMessageData(metadataURI) {
   let metadata = await (
-    await fetch(metadataURI)
+    await fetch(metadataURI.replace('https://ipfs.io', 'https://ocmv1.mypinata.cloud'))
   ).json();
 
   if (metadata.plain_content)
@@ -58,7 +58,7 @@ export async function getMessageData(metadataURI) {
       title: metadata.title,
       timestamp: metadata.timestamp,
       content: await (
-        await fetch("https://ipfs.io/ipfs/" + metadata.plain_content)
+        await fetch("https://ocmv1.mypinata.cloud/ipfs/" + metadata.plain_content)
       ).text(),
     };
   else if (metadata.encrypted_content)
@@ -68,7 +68,7 @@ export async function getMessageData(metadataURI) {
       timestamp: metadata.timestamp,
       content: await _decryptMessage(
         await (
-          await fetch("https://ipfs.io/ipfs/" + metadata.encrypted_content)
+          await fetch("https://ocmv1.mypinata.cloud/ipfs/" + metadata.encrypted_content)
         ).text()
       ),
     };
